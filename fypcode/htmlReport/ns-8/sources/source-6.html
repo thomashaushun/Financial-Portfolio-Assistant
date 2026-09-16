@@ -1,0 +1,201 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PortfolioOptimisationAssetResult</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto</a>
+</div>
+
+<h1>Coverage Summary for Class: PortfolioOptimisationAssetResult (com.tsh11.fypcode.dto)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PortfolioOptimisationAssetResult</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (21/21)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (21/21)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;
+<b class="fc">&nbsp;public class PortfolioOptimisationAssetResult {</b>
+&nbsp;
+&nbsp;    private String symbol;
+&nbsp;    private BigDecimal currentWeight;
+&nbsp;    private BigDecimal targetWeight;
+&nbsp;    private BigDecimal weightDifference;
+&nbsp;    private BigDecimal currentValue;
+&nbsp;    private BigDecimal targetValue;
+&nbsp;    private BigDecimal valueDifference;
+&nbsp;    private BigDecimal latestPrice;
+&nbsp;    private BigDecimal suggestedUnitChange;
+&nbsp;    private String suggestedAction;
+&nbsp;
+&nbsp;    public String getSymbol() {
+<b class="fc">&nbsp;        return symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSymbol(String symbol) {
+<b class="fc">&nbsp;        this.symbol = symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getCurrentWeight() {
+<b class="fc">&nbsp;        return currentWeight;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCurrentWeight(BigDecimal currentWeight) {
+<b class="fc">&nbsp;        this.currentWeight = currentWeight;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getTargetWeight() {
+<b class="fc">&nbsp;        return targetWeight;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setTargetWeight(BigDecimal targetWeight) {
+<b class="fc">&nbsp;        this.targetWeight = targetWeight;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getWeightDifference() {
+<b class="fc">&nbsp;        return weightDifference;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setWeightDifference(BigDecimal weightDifference) {
+<b class="fc">&nbsp;        this.weightDifference = weightDifference;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getCurrentValue() {
+<b class="fc">&nbsp;        return currentValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCurrentValue(BigDecimal currentValue) {
+<b class="fc">&nbsp;        this.currentValue = currentValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getTargetValue() {
+<b class="fc">&nbsp;        return targetValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setTargetValue(BigDecimal targetValue) {
+<b class="fc">&nbsp;        this.targetValue = targetValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getValueDifference() {
+<b class="fc">&nbsp;        return valueDifference;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setValueDifference(BigDecimal valueDifference) {
+<b class="fc">&nbsp;        this.valueDifference = valueDifference;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getLatestPrice() {
+<b class="fc">&nbsp;        return latestPrice;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setLatestPrice(BigDecimal latestPrice) {
+<b class="fc">&nbsp;        this.latestPrice = latestPrice;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getSuggestedUnitChange() {
+<b class="fc">&nbsp;        return suggestedUnitChange;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSuggestedUnitChange(BigDecimal suggestedUnitChange) {
+<b class="fc">&nbsp;        this.suggestedUnitChange = suggestedUnitChange;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getSuggestedAction() {
+<b class="fc">&nbsp;        return suggestedAction;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSuggestedAction(String suggestedAction) {
+<b class="fc">&nbsp;        this.suggestedAction = suggestedAction;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

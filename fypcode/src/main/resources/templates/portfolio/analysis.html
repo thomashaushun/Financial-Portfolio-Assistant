@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Portfolio Analysis</title>
+
+    <!--
+    CSRF metadata used by portfolio-analysis.js.
+    The benchmark and optimisation requests are GET requests, but the explanation request is POST.
+    Spring Security may require the CSRF token for that POST request.
+    -->
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+    <!--
+    Shared portfolio header.
+    This inserts the reusable portfolio navigation/header fragment.
+    Arguments:
+    - "Portfolio Analysis" is the page title.
+    - "Compare your portfolio against a benchmark and review optimisation results." is the page subtitle.
+    - "analysis" marks the Analysis navigation button as active.
+    -->
+    <div th:replace="~{fragments/portfolio-header :: portfolioHeader('Portfolio Analysis', 'Compare your portfolio against a benchmark and review optimisation results.', 'analysis')}"></div>
+
+    <!--
+    Page-level alert container.
+    portfolio-analysis.js uses this to show validation/API errors for benchmark, optimisation and explanation.
+    -->
+    <div id="alertContainer"></div>
+
+    <!--
+    Benchmark Analysis section.
+    The user selects a benchmark symbol and date range.
+    portfolio-analysis.js sends these values to GET /api/portfolio/analysis/benchmark.
+    -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Benchmark Comparison</h2>
+
+            <form id="analysisForm" class="row g-3 align-items-end">
+                <!--
+                Benchmark symbol input.
+                The user can type directly, and JavaScript also uses this field for benchmark search/autocomplete.
+                Default value is SPX.
+                -->
+                <div class="col-md-3">
+                    <label for="benchmarkSymbol" class="form-label">Benchmark</label>
+                    <input
+                            id="benchmarkSymbol"
+                            class="form-control"
+                            value="SPX"
+                            maxlength="50"
+                            autocomplete="off"
+                            required>
+                    <div id="benchmarkSearchResults" class="list-group mt-2 d-none"></div>
+                </div>
+
+                <!-- Date range sent to the benchmark comparison endpoint. -->
+                <div class="col-md-3">
+                    <label for="fromDate" class="form-label">From</label>
+                    <input id="fromDate" type="date" class="form-control" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="toDate" class="form-label">To</label>
+                    <input id="toDate" type="date" class="form-control" required>
+                </div>
+
+                <!-- Run Analysis submits the form. Reset restores default dates and reloads analysis. -->
+                <div class="col-md-3 d-flex gap-2">
+                    <button id="runAnalysisButton" type="submit" class="btn btn-primary flex-fill">
+                        Run Analysis
+                    </button>
+                    <button id="resetDatesButton" type="button" class="btn btn-outline-secondary">
+                        Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shown while benchmark comparison is loading. -->
+    <div id="loadingState" class="text-muted mb-3 d-none">Loading analysis...</div>
+
+    <!--
+    Benchmark result content.
+    Hidden until GET /api/portfolio/analysis/benchmark returns usable data.
+    -->
+    <div id="analysisContent" class="d-none">
+        <!--
+        Benchmark metric cards.
+        These values are calculated by the backend and formatted/rendered by portfolio-analysis.js.
+        -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Portfolio Return</div>
+                        <div id="portfolioReturnPercent" class="fs-4 fw-semibold">-</div>
+                        <div id="portfolioValueSummary" class="small text-muted mt-2">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Benchmark Return</div>
+                        <div id="benchmarkReturnPercent" class="fs-4 fw-semibold">-</div>
+                        <div id="benchmarkValueSummary" class="small text-muted mt-2">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Excess Return</div>
+                        <div id="excessReturnPercent" class="fs-4 fw-semibold">-</div>
+                        <div id="benchmarkSummary" class="small text-muted mt-2">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--
+        Indexed performance chart.
+        portfolio-analysis.js renders this as a Chart.js line chart.
+        Both portfolio and benchmark are indexed to 100 by the backend for easier comparison.
+        -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Indexed Performance</h2>
+                <p class="text-muted small">
+                    Both series are indexed to 100 at the start date to make relative performance easier to compare.
+                </p>
+                <canvas id="analysisChart" height="110"></canvas>
+            </div>
+        </div>
+
+        <!--
+        Text summary of benchmark analysis.
+        JavaScript fills the benchmark, date range, number of data points and result sentence.
+        -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Analysis Summary</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Benchmark</dt>
+                    <dd id="summaryBenchmarkSymbol" class="col-sm-9">-</dd>
+
+                    <dt class="col-sm-3">Date Range</dt>
+                    <dd id="summaryDateRange" class="col-sm-9">-</dd>
+
+                    <dt class="col-sm-3">Data Points</dt>
+                    <dd id="summaryPointCount" class="col-sm-9">-</dd>
+
+                    <dt class="col-sm-3">Result</dt>
+                    <dd id="summaryResultText" class="col-sm-9">-</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shown when benchmark comparison returns no usable data. -->
+    <div id="emptyState" class="alert alert-info d-none mb-4">
+        No analysis data is available for the selected period.
+    </div>
+
+    <!--
+    Portfolio Optimisation section.
+    The user selects a date range and algorithm.
+    portfolio-analysis.js calls GET /api/portfolio/analysis/optimise.
+    -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Portfolio Optimisation</h2>
+            <p class="text-muted small">
+                Analyse the current portfolio using the selected optimisation algorithm.
+            </p>
+
+            <form id="optimisationForm" class="row g-3 align-items-end mb-3">
+                <div class="col-md-4">
+                    <label for="optimisationFromDate" class="form-label">From</label>
+                    <input id="optimisationFromDate" type="date" class="form-control" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="optimisationToDate" class="form-label">To</label>
+                    <input id="optimisationToDate" type="date" class="form-control" required>
+                </div>
+
+                <!--
+                Algorithm selector.
+                MEAN_VARIANCE shows an efficient frontier chart.
+                RISK_PARITY returns a single target allocation, so the efficient frontier chart is hidden.
+                -->
+                <div class="col-md-4">
+                    <label for="optimisationAlgorithm" class="form-label">Algorithm</label>
+                    <div class="d-flex gap-2">
+                        <select id="optimisationAlgorithm" class="form-select">
+                            <option value="MEAN_VARIANCE">Mean Variance</option>
+                            <option value="RISK_PARITY">Risk Parity</option>
+                        </select>
+                        <button id="runOptimisationButton" type="submit" class="btn btn-primary">
+                            Run Optimisation
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Shown while optimisation is loading. -->
+            <div id="optimisationLoadingState" class="text-muted mb-3 d-none">
+                Loading optimisation...
+            </div>
+
+            <!-- Hidden until optimisation data is returned. -->
+            <div id="optimisationContent" class="d-none">
+                <!--
+                Optimisation metric cards.
+                Current and calculated/optimised metrics are returned by the backend optimiser.
+                The frontend only formats them.
+                -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Current Return</div>
+                                <div id="mptCurrentReturn" class="fs-5 fw-semibold">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Current Volatility</div>
+                                <div id="mptCurrentVolatility" class="fs-5 fw-semibold">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Current Sharpe Ratio</div>
+                                <div id="mptCurrentSharpe" class="fs-5 fw-semibold">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Optimised Return</div>
+                                <div id="mptOptimisedReturn" class="fs-5 fw-semibold">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Optimised Volatility</div>
+                                <div id="mptOptimisedVolatility" class="fs-5 fw-semibold">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Optimised Sharpe Ratio</div>
+                                <div id="mptOptimisedSharpe" class="fs-5 fw-semibold">-</div>
+                                <div id="mptSharpeImprovement" class="small text-muted mt-2">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--
+                Mean-Variance visualisation.
+                portfolio-analysis.js renders this as a Chart.js scatter chart for Mean Variance.
+                For Risk Parity, this card is hidden because Risk Parity does not produce a full efficient frontier.
+                -->
+                <div id="efficientFrontierCard" class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h3 id="optimisationChartTitle" class="h6 mb-3">Efficient Frontier</h3>
+                        <p id="optimisationChartDescription" class="text-muted small">
+                            The efficient frontier shows alternative mean-variance portfolios with different risk-return trade-offs.
+                        </p>
+                        <canvas id="optimisationChart" height="110"></canvas>
+                    </div>
+                </div>
+
+                <!--
+                Allocation comparison table.
+                JavaScript fills this with current weight, target weight, difference and suggested change for each asset.
+                -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h3 class="h6 mb-3">Allocation Comparison</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Current Weight</th>
+                                    <th>Target Weight</th>
+                                    <th>Difference</th>
+                                    <th>Suggested Change</th>
+                                </tr>
+                                </thead>
+                                <tbody id="optimisationAllocationTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-muted">No optimisation data yet.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!--
+                Suggestions and warnings.
+                Suggestions describe rebalance direction.
+                Warnings explain limitations such as excluded assets or missing historical data.
+                -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h3 class="h6 mb-3">Suggestions</h3>
+                                <ul id="optimisationSuggestionsList" class="mb-0">
+                                    <li class="text-muted">No suggestions yet.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h3 class="h6 mb-3">Warnings</h3>
+                                <ul id="optimisationWarningsList" class="mb-0">
+                                    <li class="text-muted">No warnings.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--
+                Explanation section.
+                Explanation is requested after optimisation.
+                The frontend sends the latest optimisation result to POST /api/portfolio/analysis/explain.
+                The LLM explains already-calculated data; it does not calculate portfolio metrics.
+                -->
+                <div class="card shadow-sm mt-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h6 mb-0">Explanation</h3>
+                            <button id="explainOptimisationButton" type="button" class="btn btn-outline-primary btn-sm">
+                                Explain This Result
+                            </button>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button
+                                    id="explainPortfolioBasicsButton"
+                                    type="button"
+                                    class="btn btn-outline-secondary btn-sm">
+                                What is a finance portfolio?
+                            </button>
+
+                            <button
+                                    id="explainCalculationButton"
+                                    type="button"
+                                    class="btn btn-outline-secondary btn-sm">
+                                How is this portfolio calculated?
+                            </button>
+                        </div>
+
+                        <div id="explanationLoadingState" class="text-muted d-none mb-2">
+                            Loading explanation...
+                        </div>
+
+                        <div id="explanationContent" class="d-none">
+                            <h4 id="explanationTitle" class="h6"></h4>
+                            <div id="explanationText" class="mb-2"></div>
+                            <div id="explanationFallbackNote" class="small text-muted d-none">
+                                A fallback explanation was used.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shown when optimisation returns no usable data. -->
+            <div id="optimisationEmptyState" class="alert alert-info d-none mt-3">
+                No optimisation data is available for the selected period.
+            </div>
+        </div>
+    </div>
+
+    <!--
+    PDF export entry point.
+    The button is defined here, but the actual export logic is in portfolio-analysis-export.js.
+    -->
+    <div class="card shadow-sm mt-4 mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="h5 mb-1">Export Report</h2>
+                <p class="text-muted mb-0">
+                    Save the current portfolio analysis, holdings, allocation, benchmark, optimisation and explanation as a PDF.
+                </p>
+            </div>
+            <button id="exportPdfButton" type="button" class="btn btn-success">
+                Export your portfolio as PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js is required for benchmark line chart and optimisation scatter chart. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- PDF libraries used by portfolio-analysis-export.js. -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Main analysis behaviour: benchmark, optimisation, explanation. -->
+<script th:src="@{/js/portfolio-analysis.js}"></script>
+
+<!-- Separate PDF export behaviour. -->
+<script th:src="@{/js/portfolio-analysis-export.js}"></script>
+</body>
+</html>

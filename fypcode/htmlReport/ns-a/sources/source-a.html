@@ -1,0 +1,215 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > BenchmarkComparisonResponse</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.response</a>
+</div>
+
+<h1>Coverage Summary for Class: BenchmarkComparisonResponse (com.tsh11.fypcode.dto.response)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">BenchmarkComparisonResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (23/23)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (23/23)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.response;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.time.LocalDate;
+&nbsp;import java.util.List;
+&nbsp;
+<b class="fc">&nbsp;public class BenchmarkComparisonResponse {</b>
+&nbsp;
+&nbsp;    private String benchmarkSymbol;
+&nbsp;    private LocalDate fromDate;
+&nbsp;    private LocalDate toDate;
+&nbsp;
+&nbsp;    private BigDecimal startingPortfolioValue;
+&nbsp;    private BigDecimal endingPortfolioValue;
+&nbsp;    private BigDecimal portfolioReturnPercent;
+&nbsp;
+&nbsp;    private BigDecimal startingBenchmarkValue;
+&nbsp;    private BigDecimal endingBenchmarkValue;
+&nbsp;    private BigDecimal benchmarkReturnPercent;
+&nbsp;
+&nbsp;    private BigDecimal excessReturnPercent;
+&nbsp;    private List&lt;BenchmarkPointResponse&gt; points;
+&nbsp;
+&nbsp;    public String getBenchmarkSymbol() {
+<b class="fc">&nbsp;        return benchmarkSymbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setBenchmarkSymbol(String benchmarkSymbol) {
+<b class="fc">&nbsp;        this.benchmarkSymbol = benchmarkSymbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public LocalDate getFromDate() {
+<b class="fc">&nbsp;        return fromDate;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setFromDate(LocalDate fromDate) {
+<b class="fc">&nbsp;        this.fromDate = fromDate;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public LocalDate getToDate() {
+<b class="fc">&nbsp;        return toDate;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setToDate(LocalDate toDate) {
+<b class="fc">&nbsp;        this.toDate = toDate;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getStartingPortfolioValue() {
+<b class="fc">&nbsp;        return startingPortfolioValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setStartingPortfolioValue(BigDecimal startingPortfolioValue) {
+<b class="fc">&nbsp;        this.startingPortfolioValue = startingPortfolioValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getEndingPortfolioValue() {
+<b class="fc">&nbsp;        return endingPortfolioValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setEndingPortfolioValue(BigDecimal endingPortfolioValue) {
+<b class="fc">&nbsp;        this.endingPortfolioValue = endingPortfolioValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getPortfolioReturnPercent() {
+<b class="fc">&nbsp;        return portfolioReturnPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setPortfolioReturnPercent(BigDecimal portfolioReturnPercent) {
+<b class="fc">&nbsp;        this.portfolioReturnPercent = portfolioReturnPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getStartingBenchmarkValue() {
+<b class="fc">&nbsp;        return startingBenchmarkValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setStartingBenchmarkValue(BigDecimal startingBenchmarkValue) {
+<b class="fc">&nbsp;        this.startingBenchmarkValue = startingBenchmarkValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getEndingBenchmarkValue() {
+<b class="fc">&nbsp;        return endingBenchmarkValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setEndingBenchmarkValue(BigDecimal endingBenchmarkValue) {
+<b class="fc">&nbsp;        this.endingBenchmarkValue = endingBenchmarkValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getBenchmarkReturnPercent() {
+<b class="fc">&nbsp;        return benchmarkReturnPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setBenchmarkReturnPercent(BigDecimal benchmarkReturnPercent) {
+<b class="fc">&nbsp;        this.benchmarkReturnPercent = benchmarkReturnPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getExcessReturnPercent() {
+<b class="fc">&nbsp;        return excessReturnPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setExcessReturnPercent(BigDecimal excessReturnPercent) {
+<b class="fc">&nbsp;        this.excessReturnPercent = excessReturnPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;BenchmarkPointResponse&gt; getPoints() {
+<b class="fc">&nbsp;        return points;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setPoints(List&lt;BenchmarkPointResponse&gt; points) {
+<b class="fc">&nbsp;        this.points = points;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

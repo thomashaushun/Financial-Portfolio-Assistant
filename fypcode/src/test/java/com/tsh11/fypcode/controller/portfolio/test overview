@@ -1,0 +1,2 @@
+Focus of the tests:
+HTTP request → controller → mocked service/provider → JSON response

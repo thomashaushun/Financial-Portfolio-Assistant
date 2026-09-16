@@ -1,0 +1,63 @@
+@startuml
+title Figure 4.4 Web and Security Layer Design
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Browser / Frontend" as Browser
+
+package "Security Layer" {
+  component "SecurityConfig\nSpring Security rules" as SecurityConfig
+  component "CustomUserDetailsService\nLoads user details" as UserDetails
+  component "AppUserPrincipal\nAuthenticated user context" as Principal
+}
+
+package "Web Layer" {
+  component "Page Controllers\nPortfolioPageController\nPortfolioOverviewController\nAuthPageController\nHomeController" as PageControllers
+
+  component "Portfolio API Controllers\nPortfolioActivityController\nPortfolioHoldingController\nPortfolioAllocationController\nPortfolioAnalysisController" as PortfolioControllers
+
+  component "Asset / Market Controllers\nAssetProfileController\nAssetSearchController\nBenchmarkSearchController\nMarketDataController" as AssetMarketControllers
+
+  component "Assistant Controllers\nInvestorProfileController\nFinancialAssistantController" as AssistantControllers
+
+  component "Explanation Controller\nPortfolioExplanationController" as ExplanationController
+
+  component "GlobalExceptionHandler\nConverts exceptions to API errors" as ExceptionHandler
+}
+
+package "Service Layer" {
+  component "UserService" as UserService
+  component "Portfolio Services" as PortfolioServices
+  component "Asset / Market Services" as AssetMarketServices
+  component "Assistant Services" as AssistantServices
+  component "Explanation Services" as ExplanationServices
+}
+
+database "UserRepository" as UserRepo
+
+Browser --> SecurityConfig : page / API request
+SecurityConfig --> UserDetails : authenticate user
+UserDetails --> UserRepo : load user account
+UserDetails --> Principal : create authenticated principal
+
+SecurityConfig --> PageControllers : authorised page request
+SecurityConfig --> PortfolioControllers : authorised portfolio API request
+SecurityConfig --> AssetMarketControllers : authorised asset/market API request
+SecurityConfig --> AssistantControllers : authorised assistant API request
+SecurityConfig --> ExplanationController : authorised explanation request
+
+PageControllers --> UserService
+PortfolioControllers --> PortfolioServices
+AssetMarketControllers --> AssetMarketServices
+AssistantControllers --> AssistantServices
+ExplanationController --> ExplanationServices
+
+ExceptionHandler ..> PageControllers
+ExceptionHandler ..> PortfolioControllers
+ExceptionHandler ..> AssetMarketControllers
+ExceptionHandler ..> AssistantControllers
+ExceptionHandler ..> ExplanationController
+
+@enduml

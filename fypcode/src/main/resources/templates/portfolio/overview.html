@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Portfolio Overview</title>
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+    <!--
+    Shared portfolio header.
+    This inserts the reusable portfolio navigation/header fragment.
+    Arguments:
+    - "Portfolio Overview" is the page title.
+    - "Summary of your current portfolio." is the page subtitle.
+    - "overview" marks the Overview navigation button as active.
+    -->
+    <div th:replace="~{fragments/portfolio-header :: portfolioHeader('Portfolio Overview', 'Summary of your current portfolio.', 'overview')}"></div>
+
+    <!--
+    Main overview page state containers.
+    portfolio-overview.js switches between these:
+    - alertContainer: displays error messages.
+    - loadingState: shown while overview data is loading.
+    - overviewContent: shown when portfolio summary data exists.
+    - emptyState: shown when the user has no holding data yet.
+    -->
+    <div id="alertContainer"></div>
+
+    <div id="loadingState" class="text-muted mb-3">Loading overview...</div>
+
+    <div id="overviewContent" class="d-none">
+        <!--
+        Portfolio summary cards.
+        These values are not calculated in the frontend.
+        portfolio-overview.js fills these IDs using the response from GET /api/portfolio/overview.
+        The backend OverviewService calculates these totals from HoldingService.
+        -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Holdings Count</div>
+                        <!-- Number of current holdings returned by the overview API. -->
+                        <div id="totalHoldingsCount" class="fs-4 fw-semibold">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total Quantity</div>
+                        <!-- Total quantity is displayed from backend data; it is not recalculated here. -->
+                        <div id="totalQuantity" class="fs-4 fw-semibold">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total Cost Basis</div>
+                        <!-- Total cost basis is calculated by the backend and formatted in JavaScript. -->
+                        <div id="totalCostBasis" class="fs-4 fw-semibold">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total Market Value</div>
+                        <!-- Total market value of the current holdings, formatted by portfolio-overview.js. -->
+                        <div id="totalMarketValue" class="fs-4 fw-semibold">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Unrealized Gain / Loss</div>
+                        <!-- Unrealised gain/loss is colour-coded in JavaScript: green for profit, red for loss. -->
+                        <div id="totalUnrealizedGainLoss" class="fs-4 fw-semibold">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Unrealized Gain / Loss %</div>
+                        <!-- Unrealised gain/loss percentage is also colour-coded by portfolio-overview.js. -->
+                        <div id="totalUnrealizedGainLossPercent" class="fs-4 fw-semibold">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--
+        Quick summary section.
+        baseCurrency comes from the backend response.
+        portfolioStatus is built in portfolio-overview.js from the unrealised gain/loss value.
+        -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Quick Summary</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Base Currency</dt>
+                    <dd id="baseCurrency" class="col-sm-9">-</dd>
+
+                    <dt class="col-sm-3">Portfolio Status</dt>
+                    <dd id="portfolioStatus" class="col-sm-9">-</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!--
+    Shown when the backend reports zero holdings.
+    This tells the user that activities are needed before the overview can show portfolio totals.
+    -->
+    <div id="emptyState" class="alert alert-info d-none">
+        No overview data available yet. Add some activities first.
+    </div>
+
+    <!--
+    Financial Consultant Assistant summary.
+    This section is populated by portfolio-overview.js using GET /api/portfolio/assistant.
+    It displays the user's risk profile, target allocation, actual allocation, allocation comparison, and assistant insights.
+    The calculations come from backend assistant services, not from the frontend.
+    -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Financial Consultant Assistant</h2>
+                    <p class="text-muted small mb-0">Rule-based suitability insights based on your investor profile and current allocation.</p>
+                </div>
+
+                <!--
+                Shortcut to the Investor Profile page.
+                This lets users update the profile that drives the assistant's risk profile and target allocation.
+                -->
+                <a class="btn btn-outline-primary btn-sm" href="/portfolio/investor-profile">Update Profile</a>
+            </div>
+
+            <!--
+            Assistant state containers.
+            portfolio-overview.js shows:
+            - assistantLoadingState while /api/portfolio/assistant is loading.
+            - assistantContent when an investor profile exists.
+            - assistantEmptyState when no investor profile exists.
+            -->
+            <div id="assistantLoadingState" class="text-muted">Loading assistant insights...</div>
+            <div id="assistantContent" class="d-none">
+                <!--
+                Assistant summary cards.
+                Risk Profile and Risk Score come from the saved investor profile.
+                Target Allocation is based on the user's calculated risk profile.
+                Actual Allocation is based on the user's current holdings.
+                -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Risk Profile</div>
+                            <div id="assistantRiskProfile" class="fs-5 fw-semibold">-</div>
+                            <div id="assistantRiskScore" class="small text-muted">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Target Allocation</div>
+                            <div id="assistantTargetAllocation" class="small mt-1">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Actual Allocation</div>
+                            <div id="assistantActualAllocation" class="small mt-1">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--
+                Target vs actual allocation comparison table.
+                portfolio-overview.js renders rows for buckets such as Equity, Bond and Cash.
+                The Difference column is colour-coded by JavaScript.
+                -->
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Bucket</th>
+                            <th class="text-end">Target</th>
+                            <th class="text-end">Actual</th>
+                            <th class="text-end">Difference</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody id="assistantComparisonTableBody">
+                        <tr>
+                            <td colspan="5" class="text-muted">No comparison available.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!--
+                Assistant insight messages.
+                The backend returns insight text and severity.
+                portfolio-overview.js renders them as Bootstrap alert boxes.
+                -->
+                <h3 class="h6 mb-2">Assistant Insights</h3>
+                <div id="assistantInsightsList" class="d-grid gap-2"></div>
+            </div>
+
+            <!--
+            Shown when no investor profile exists.
+            Without an investor profile, the assistant cannot calculate personalised suitability insights.
+            -->
+            <div id="assistantEmptyState" class="alert alert-info d-none mb-0">
+                Complete your investor profile to receive suitability insights.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--
+New-user onboarding modal.
+portfolio-overview.js shows this only when:
+1. the user has no overview data / holdings, and
+2. the user has no investor profile.
+The modal pushes the user to complete the investor profile first, but still allows "Ignore and continue".
+-->
+<div class="modal fade" id="newUserOnboardingModal" tabindex="-1" aria-labelledby="newUserOnboardingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="newUserOnboardingModalLabel">Welcome to your portfolio assistant</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">
+                    Hello! This dashboard will help you track your simulated investments and understand your portfolio more clearly.
+                </p>
+                <p class="mb-0">
+                    To receive personalised assistant insights, please complete your investor profile first.
+                </p>
+            </div>
+            <div class="modal-footer d-flex justify-content-between flex-wrap gap-2">
+                <button id="dismissNewUserOnboardingButton" type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Ignore and continue
+                </button>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-primary" href="/portfolio/investor-profile">Investor profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap is needed for the modal. portfolio-overview.js controls API calls and rendering for this page. -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/portfolio-overview.js}"></script>
+</body>
+</html>

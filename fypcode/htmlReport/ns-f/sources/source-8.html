@@ -1,0 +1,640 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ExplainabilityService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service</a>
+</div>
+
+<h1>Coverage Summary for Class: ExplainabilityService (com.tsh11.fypcode.service)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ExplainabilityService</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/28)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/100)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/198)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">ExplainabilityService$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/29)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/100)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/199)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.dto.ExplanationMode;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioMetricsDto;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationAssetResult;
+&nbsp;import com.tsh11.fypcode.dto.request.PortfolioExplanationRequest;
+&nbsp;import com.tsh11.fypcode.dto.response.PortfolioExplanationResponse;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.math.RoundingMode;
+&nbsp;import java.util.List;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Service
+&nbsp;public class ExplainabilityService {
+&nbsp;
+&nbsp;    private final CachedLlmExplanationService cachedLlmExplanationService;
+&nbsp;
+<b class="nc">&nbsp;    public ExplainabilityService(CachedLlmExplanationService cachedLlmExplanationService) {</b>
+<b class="nc">&nbsp;        this.cachedLlmExplanationService = cachedLlmExplanationService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public PortfolioExplanationResponse explain(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        validateRequest(request);</b>
+&nbsp;
+<b class="nc">&nbsp;        String title = buildTitle(request.getMode(), request.getTerm());</b>
+<b class="nc">&nbsp;        String prompt = buildPrompt(request);</b>
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            String cacheKey = buildCacheKey(request, prompt);</b>
+<b class="nc">&nbsp;            String explanation = cachedLlmExplanationService.explain(cacheKey, prompt);</b>
+&nbsp;
+<b class="nc">&nbsp;            PortfolioExplanationResponse response = new PortfolioExplanationResponse();</b>
+<b class="nc">&nbsp;            response.setMode(request.getMode());</b>
+<b class="nc">&nbsp;            response.setTitle(title);</b>
+<b class="nc">&nbsp;            response.setExplanation(cleanExplanation(explanation));</b>
+<b class="nc">&nbsp;            response.setFallbackUsed(false);</b>
+<b class="nc">&nbsp;            return response;</b>
+&nbsp;        } catch (Exception ex) {
+<b class="nc">&nbsp;            ex.printStackTrace();</b>
+&nbsp;
+<b class="nc">&nbsp;            PortfolioExplanationResponse response = new PortfolioExplanationResponse();</b>
+<b class="nc">&nbsp;            response.setMode(request.getMode());</b>
+<b class="nc">&nbsp;            response.setTitle(title);</b>
+<b class="nc">&nbsp;            response.setExplanation(buildFallbackExplanation(request));</b>
+<b class="nc">&nbsp;            response.setFallbackUsed(true);</b>
+<b class="nc">&nbsp;            return response;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateRequest(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        if (request == null) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Explanation request must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (request.getMode() == null) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Explanation mode must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (request.getMode() == ExplanationMode.TERM) {</b>
+<b class="nc">&nbsp;            if (request.getTerm() == null || request.getTerm().isBlank()) {</b>
+<b class="nc">&nbsp;                throw new IllegalArgumentException(&quot;A term must be provided for term explanation mode.&quot;);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildTitle(ExplanationMode mode, String term) {
+<b class="nc">&nbsp;        return switch (mode) {</b>
+<b class="nc">&nbsp;            case SUMMARY -&gt; &quot;Portfolio Explanation&quot;;</b>
+<b class="nc">&nbsp;            case TERM -&gt; &quot;Explanation: &quot; + term;</b>
+<b class="nc">&nbsp;            case DETAILED -&gt; &quot;Detailed Portfolio Explanation&quot;;</b>
+<b class="nc">&nbsp;            case WARNING -&gt; &quot;Portfolio Warnings and Limitations&quot;;</b>
+<b class="nc">&nbsp;            case PORTFOLIO_BASICS -&gt; &quot;What Is a Finance Portfolio?&quot;;</b>
+<b class="nc">&nbsp;            case ALGORITHM_EXPLANATION -&gt; &quot;How is this portfolio calculated?&quot;;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildPrompt(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        return switch (request.getMode()) {</b>
+<b class="nc">&nbsp;            case SUMMARY -&gt; buildSummaryPrompt(request);</b>
+<b class="nc">&nbsp;            case TERM -&gt; buildTermPrompt(request);</b>
+<b class="nc">&nbsp;            case DETAILED -&gt; buildDetailedPrompt(request);</b>
+<b class="nc">&nbsp;            case WARNING -&gt; buildWarningPrompt(request);</b>
+<b class="nc">&nbsp;            case PORTFOLIO_BASICS -&gt; buildPortfolioBasicsPrompt(request);</b>
+<b class="nc">&nbsp;            case ALGORITHM_EXPLANATION -&gt; buildAlgorithmExplanationPrompt(request);</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private String baseInstructions() {
+<b class="nc">&nbsp;        return &quot;&quot;&quot;</b>
+&nbsp;                You are helping a beginner investor understand calculated portfolio results.
+&nbsp;
+&nbsp;                Write for a finance layman.
+&nbsp;                Use simple everyday language.
+&nbsp;                Target reading level: age 13-15.
+&nbsp;                Use short sentences.
+&nbsp;                Avoid technical finance wording unless it is necessary.
+&nbsp;                If a finance term appears, explain it immediately in brackets.
+&nbsp;                Do not sound like a financial report.
+&nbsp;                Do not use phrases like &quot;risk-adjusted return&quot; unless you explain it as &quot;return compared with the amount of ups and downs&quot;.
+&nbsp;                Do not give personal financial advice.
+&nbsp;                Do not tell the user what they should buy or sell.
+&nbsp;                Say &quot;the system suggests&quot; or &quot;the calculation suggests&quot;, not &quot;you should&quot;.
+&nbsp;                Do not invent numbers.
+&nbsp;                Only use the values given below.
+&nbsp;                Do not mention algorithms unless directly useful.
+&nbsp;                Do not use markdown tables.
+&nbsp;                Do not use long bullet lists.
+&nbsp;                Use at most 4 short sections.
+&nbsp;                End with this sentence: &quot;This is an explanation of the calculation, not financial advice.&quot;
+&nbsp;                &quot;&quot;&quot;;
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildSummaryPrompt(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        StringBuilder prompt = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(baseInstructions()).append(&quot;\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;&quot;&quot;</b>
+&nbsp;                Task:
+&nbsp;                Explain the overall portfolio optimisation result in plain language.
+&nbsp;
+&nbsp;                Required output format:
+&nbsp;                1. Start with a one-sentence takeaway.
+&nbsp;                2. Explain current portfolio vs calculated portfolio in simple words.
+&nbsp;                3. Explain the main suggested change.
+&nbsp;                4. Explain any warnings only if warnings are provided.
+&nbsp;
+&nbsp;                Avoid:
+&nbsp;                - &quot;optimised portfolio&quot; without explaining it
+&nbsp;                - &quot;volatility&quot; without explaining it
+&nbsp;                - &quot;Sharpe ratio&quot; without explaining it
+&nbsp;                - percentages without saying what they mean
+<b class="nc">&nbsp;                &quot;&quot;&quot;).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        appendInputData(prompt, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        return prompt.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildTermPrompt(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        StringBuilder prompt = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(baseInstructions()).append(&quot;\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;&quot;&quot;</b>
+&nbsp;                Task:
+&nbsp;                Explain one finance term in very simple language.
+&nbsp;
+&nbsp;                Required output format:
+&nbsp;                1. One simple definition.
+&nbsp;                2. One everyday analogy.
+&nbsp;                3. How it relates to this portfolio, if the data is relevant.
+&nbsp;
+&nbsp;                Keep it under 120 words.
+<b class="nc">&nbsp;                &quot;&quot;&quot;).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;Term to explain: &quot;).append(request.getTerm()).append(&quot;\n\n&quot;);</b>
+<b class="nc">&nbsp;        appendInputData(prompt, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        return prompt.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildDetailedPrompt(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        StringBuilder prompt = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(baseInstructions()).append(&quot;\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;&quot;&quot;</b>
+&nbsp;                Task:
+&nbsp;                Give a slightly more detailed explanation, but still suitable for a beginner.
+&nbsp;
+&nbsp;                Required output format:
+&nbsp;                1. Main takeaway
+&nbsp;                2. What the numbers mean
+&nbsp;                3. What changed in the asset mix
+&nbsp;                4. Limitations or warnings
+&nbsp;
+&nbsp;                Keep the answer under 350 words.
+<b class="nc">&nbsp;                &quot;&quot;&quot;).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        appendInputData(prompt, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        return prompt.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildWarningPrompt(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        StringBuilder prompt = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(baseInstructions()).append(&quot;\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;&quot;&quot;</b>
+&nbsp;                Task:
+&nbsp;                Explain warnings or excluded assets in simple language.
+&nbsp;
+&nbsp;                Required output format:
+&nbsp;                1. What was excluded or limited
+&nbsp;                2. Why that matters
+&nbsp;                3. What the user should understand from it
+&nbsp;
+&nbsp;                Do not blame the user.
+&nbsp;                Do not use technical API language unless necessary.
+<b class="nc">&nbsp;                &quot;&quot;&quot;).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        appendInputData(prompt, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        return prompt.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildPortfolioBasicsPrompt(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        StringBuilder prompt = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(baseInstructions()).append(&quot;\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;&quot;&quot;</b>
+&nbsp;            Task:
+&nbsp;            Explain what a finance portfolio is to a complete beginner.
+&nbsp;
+&nbsp;            Required output:
+&nbsp;            1. Define a portfolio in one simple sentence.
+&nbsp;            2. Explain why people hold more than one asset.
+&nbsp;            3. Explain what allocation means.
+&nbsp;            4. Explain diversification using an everyday example.
+&nbsp;
+&nbsp;            Keep it under 300 words.
+<b class="nc">&nbsp;            &quot;&quot;&quot;).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        appendInputData(prompt, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        return prompt.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildAlgorithmExplanationPrompt(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        StringBuilder prompt = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(baseInstructions()).append(&quot;\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (request.getAlgorithm() != null &amp;&amp; request.getAlgorithm().name().equals(&quot;MEAN_VARIANCE&quot;)) {</b>
+<b class="nc">&nbsp;            prompt.append(&quot;&quot;&quot;</b>
+&nbsp;                Task:
+&nbsp;                Explain how the Mean Variance portfolio calculation works to a complete beginner.
+&nbsp;
+&nbsp;                Required output:
+&nbsp;                1. Start with one simple sentence explaining what the calculation tries to do.
+&nbsp;                2. Explain &quot;return&quot; as possible gain.
+&nbsp;                3. Explain &quot;risk&quot; or &quot;volatility&quot; as how much the value may move up and down.
+&nbsp;                4. Explain &quot;efficient frontier&quot; as the set of mixes that aim to get the best return for a chosen level of ups and downs.
+&nbsp;                5. Explain why the calculated portfolio mix may differ from the current mix.
+&nbsp;                6. Mention that it uses past price data and that past data cannot guarantee the future.
+&nbsp;
+&nbsp;                Keep it under 350 words.
+<b class="nc">&nbsp;                &quot;&quot;&quot;).append(&quot;\n\n&quot;);</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            prompt.append(&quot;&quot;&quot;</b>
+&nbsp;                Task:
+&nbsp;                Explain how this portfolio calculation works to a complete beginner.
+&nbsp;
+&nbsp;                Required output:
+&nbsp;                1. Explain what the calculation is trying to compare.
+&nbsp;                2. Explain the key terms in simple language.
+&nbsp;                3. Explain why the calculated portfolio mix may differ from the current mix.
+&nbsp;                4. Mention that calculations use available data and cannot guarantee the future.
+&nbsp;
+&nbsp;                Keep it under 350 words.
+<b class="nc">&nbsp;                &quot;&quot;&quot;).append(&quot;\n\n&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        appendInputData(prompt, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        return prompt.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void appendInputData(StringBuilder prompt, PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        prompt.append(&quot;Calculated data to explain:\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        appendMetrics(prompt, &quot;Current portfolio&quot;, request.getCurrentPortfolio());</b>
+<b class="nc">&nbsp;        appendMetrics(prompt, &quot;Calculated portfolio&quot;, request.getOptimisedPortfolio());</b>
+&nbsp;
+<b class="nc">&nbsp;        BigDecimal returnDifference = difference(</b>
+<b class="nc">&nbsp;                request.getOptimisedPortfolio() != null ? request.getOptimisedPortfolio().getExpectedAnnualReturn() : null,</b>
+<b class="nc">&nbsp;                request.getCurrentPortfolio() != null ? request.getCurrentPortfolio().getExpectedAnnualReturn() : null</b>
+&nbsp;        );
+&nbsp;
+<b class="nc">&nbsp;        BigDecimal volatilityDifference = difference(</b>
+<b class="nc">&nbsp;                request.getOptimisedPortfolio() != null ? request.getOptimisedPortfolio().getAnnualVolatility() : null,</b>
+<b class="nc">&nbsp;                request.getCurrentPortfolio() != null ? request.getCurrentPortfolio().getAnnualVolatility() : null</b>
+&nbsp;        );
+&nbsp;
+<b class="nc">&nbsp;        BigDecimal sharpeDifference = difference(</b>
+<b class="nc">&nbsp;                request.getOptimisedPortfolio() != null ? request.getOptimisedPortfolio().getSharpeRatio() : null,</b>
+<b class="nc">&nbsp;                request.getCurrentPortfolio() != null ? request.getCurrentPortfolio().getSharpeRatio() : null</b>
+&nbsp;        );
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;Simple comparison:\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;- return change: &quot;).append(formatSignedPercent(returnDifference)).append(&quot;\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;- volatility change: &quot;).append(formatSignedPercent(volatilityDifference)).append(&quot;\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(&quot;- Sharpe ratio change: &quot;).append(formatSignedDecimal(sharpeDifference)).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;Asset weight changes:\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(formatAssets(request.getAssets())).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;System suggestions:\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(formatLines(request.getSuggestions())).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;Warnings:\n&quot;);</b>
+<b class="nc">&nbsp;        prompt.append(formatLines(request.getWarnings())).append(&quot;\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (request.getBenchmarkSymbol() != null &amp;&amp; !request.getBenchmarkSymbol().isBlank()) {</b>
+<b class="nc">&nbsp;            prompt.append(&quot;Benchmark symbol: &quot;).append(request.getBenchmarkSymbol()).append(&quot;\n&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (request.getBenchmarkSummary() != null &amp;&amp; !request.getBenchmarkSummary().isBlank()) {</b>
+<b class="nc">&nbsp;            prompt.append(&quot;Benchmark summary: &quot;).append(request.getBenchmarkSummary()).append(&quot;\n&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (request.getUserQuestion() != null &amp;&amp; !request.getUserQuestion().isBlank()) {</b>
+<b class="nc">&nbsp;            prompt.append(&quot;User question: &quot;).append(request.getUserQuestion()).append(&quot;\n&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void appendMetrics(StringBuilder prompt, String label, PortfolioMetricsDto metrics) {
+<b class="nc">&nbsp;        prompt.append(label).append(&quot;:\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (metrics == null) {</b>
+<b class="nc">&nbsp;            prompt.append(&quot;- no data\n\n&quot;);</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;- expected yearly return: &quot;)</b>
+<b class="nc">&nbsp;                .append(formatPercent(metrics.getExpectedAnnualReturn()))</b>
+<b class="nc">&nbsp;                .append(&quot; (possible yearly gain estimated by the calculation)\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;- volatility: &quot;)</b>
+<b class="nc">&nbsp;                .append(formatPercent(metrics.getAnnualVolatility()))</b>
+<b class="nc">&nbsp;                .append(&quot; (how much the value may move up and down)\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        prompt.append(&quot;- Sharpe ratio: &quot;)</b>
+<b class="nc">&nbsp;                .append(formatDecimal(metrics.getSharpeRatio()))</b>
+<b class="nc">&nbsp;                .append(&quot; (higher usually means more return for the amount of ups and downs)\n\n&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatAssets(List&lt;PortfolioOptimisationAssetResult&gt; assets) {
+<b class="nc">&nbsp;        if (assets == null || assets.isEmpty()) {</b>
+<b class="nc">&nbsp;            return &quot;- none&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return assets.stream()</b>
+<b class="nc">&nbsp;                .map(asset -&gt; String.format(</b>
+&nbsp;                        &quot;- %s: current %s, calculated target %s, change %s&quot;,
+<b class="nc">&nbsp;                        safe(asset.getSymbol()),</b>
+<b class="nc">&nbsp;                        formatPercent(asset.getCurrentWeight()),</b>
+<b class="nc">&nbsp;                        formatPercent(asset.getTargetWeight()),</b>
+<b class="nc">&nbsp;                        formatSignedPercent(asset.getWeightDifference())</b>
+&nbsp;                ))
+<b class="nc">&nbsp;                .collect(Collectors.joining(&quot;\n&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatLines(List&lt;String&gt; lines) {
+<b class="nc">&nbsp;        if (lines == null || lines.isEmpty()) {</b>
+<b class="nc">&nbsp;            return &quot;- none&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return lines.stream()</b>
+<b class="nc">&nbsp;                .map(line -&gt; &quot;- &quot; + safe(line))</b>
+<b class="nc">&nbsp;                .collect(Collectors.joining(&quot;\n&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildFallbackExplanation(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        return switch (request.getMode()) {</b>
+<b class="nc">&nbsp;            case SUMMARY -&gt; buildSimpleFallbackSummary(request);</b>
+<b class="nc">&nbsp;            case TERM -&gt; &quot;This term is part of how the system explains your portfolio calculation. This is an explanation of the calculation, not financial advice.&quot;;</b>
+<b class="nc">&nbsp;            case DETAILED -&gt; buildSimpleFallbackSummary(request);</b>
+<b class="nc">&nbsp;            case WARNING -&gt; &quot;Some assets or data may not have been included in the calculation. This can happen when the system cannot get enough reliable price history. &quot;;</b>
+<b class="nc">&nbsp;            case PORTFOLIO_BASICS -&gt; &quot;A finance portfolio is the group of things you invest in, such as shares, funds, cash, or property. Holding different assets can help avoid relying too much on one investment.&quot;;</b>
+<b class="nc">&nbsp;            case ALGORITHM_EXPLANATION -&gt; &quot;This calculation compares different portfolio mixes. It looks at possible return and how much the value may move up and down, then looks for a mix that gives a better balance.&quot;;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildSimpleFallbackSummary(PortfolioExplanationRequest request) {
+<b class="nc">&nbsp;        String currentReturn = request.getCurrentPortfolio() == null</b>
+<b class="nc">&nbsp;                ? &quot;-&quot;</b>
+<b class="nc">&nbsp;                : formatPercent(request.getCurrentPortfolio().getExpectedAnnualReturn());</b>
+&nbsp;
+<b class="nc">&nbsp;        String optimisedReturn = request.getOptimisedPortfolio() == null</b>
+<b class="nc">&nbsp;                ? &quot;-&quot;</b>
+<b class="nc">&nbsp;                : formatPercent(request.getOptimisedPortfolio().getExpectedAnnualReturn());</b>
+&nbsp;
+<b class="nc">&nbsp;        String currentVolatility = request.getCurrentPortfolio() == null</b>
+<b class="nc">&nbsp;                ? &quot;-&quot;</b>
+<b class="nc">&nbsp;                : formatPercent(request.getCurrentPortfolio().getAnnualVolatility());</b>
+&nbsp;
+<b class="nc">&nbsp;        String optimisedVolatility = request.getOptimisedPortfolio() == null</b>
+<b class="nc">&nbsp;                ? &quot;-&quot;</b>
+<b class="nc">&nbsp;                : formatPercent(request.getOptimisedPortfolio().getAnnualVolatility());</b>
+&nbsp;
+<b class="nc">&nbsp;        return &quot;The calculation compares your current portfolio with a calculated alternative mix. &quot;</b>
+&nbsp;                + &quot;Your current expected yearly return is &quot; + currentReturn
+&nbsp;                + &quot;, while the calculated mix is &quot; + optimisedReturn + &quot;. &quot;
+&nbsp;                + &quot;Your current volatility, meaning how much the value may move up and down, is &quot;
+&nbsp;                + currentVolatility + &quot;, compared with &quot; + optimisedVolatility + &quot; for the calculated mix. &quot;
+&nbsp;                + &quot;This is an explanation of the calculation, not financial advice.&quot;;
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal difference(BigDecimal left, BigDecimal right) {
+<b class="nc">&nbsp;        if (left == null || right == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return left.subtract(right);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatPercent(BigDecimal value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return &quot;-&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        BigDecimal percent = value.multiply(BigDecimal.valueOf(100));</b>
+<b class="nc">&nbsp;        return percent.setScale(1, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString() + &quot;%&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatSignedPercent(BigDecimal value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return &quot;-&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        BigDecimal percent = value.multiply(BigDecimal.valueOf(100));</b>
+<b class="nc">&nbsp;        String text = percent.setScale(1, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString() + &quot;%&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        if (percent.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="nc">&nbsp;            return &quot;+&quot; + text;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return text;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatDecimal(BigDecimal value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return &quot;-&quot;;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatSignedDecimal(BigDecimal value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return &quot;-&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String text = value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();</b>
+<b class="nc">&nbsp;        if (value.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="nc">&nbsp;            return &quot;+&quot; + text;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return text;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String cleanExplanation(String explanation) {
+<b class="nc">&nbsp;        if (explanation == null || explanation.isBlank()) {</b>
+<b class="nc">&nbsp;            return &quot;The explanation is unavailable right now. This is an explanation of the calculation, not financial advice.&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return explanation</b>
+<b class="nc">&nbsp;                .replace(&quot;optimised portfolio&quot;, &quot;calculated portfolio mix&quot;)</b>
+<b class="nc">&nbsp;                .replace(&quot;Optimised portfolio&quot;, &quot;Calculated portfolio mix&quot;)</b>
+<b class="nc">&nbsp;                .trim();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String safe(String value) {
+<b class="nc">&nbsp;        return value == null ? &quot;-&quot; : value;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildCacheKey(PortfolioExplanationRequest request, String prompt) {
+<b class="nc">&nbsp;        String raw = request.getMode()</b>
+<b class="nc">&nbsp;                + &quot;|&quot; + safe(request.getTerm())</b>
+<b class="nc">&nbsp;                + &quot;|&quot; + safe(request.getUserQuestion())</b>
+<b class="nc">&nbsp;                + &quot;|&quot; + (request.getAlgorithm() == null ? &quot;-&quot; : request.getAlgorithm().name())</b>
+&nbsp;                + &quot;|&quot; + prompt;
+&nbsp;
+<b class="nc">&nbsp;        return sha256(raw);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String sha256(String value) {
+&nbsp;        try {
+<b class="nc">&nbsp;            java.security.MessageDigest digest = java.security.MessageDigest.getInstance(&quot;SHA-256&quot;);</b>
+<b class="nc">&nbsp;            byte[] hash = digest.digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));</b>
+&nbsp;
+<b class="nc">&nbsp;            StringBuilder hex = new StringBuilder();</b>
+<b class="nc">&nbsp;            for (byte b : hash) {</b>
+<b class="nc">&nbsp;                hex.append(String.format(&quot;%02x&quot;, b));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return hex.toString();</b>
+&nbsp;        } catch (Exception ex) {
+<b class="nc">&nbsp;            throw new IllegalStateException(&quot;Failed to build LLM explanation cache key.&quot;, ex);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

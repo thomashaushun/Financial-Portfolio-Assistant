@@ -1,0 +1,93 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > InvestorProfileRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.repository</a>
+</div>
+
+<h1>Coverage Summary for Class: InvestorProfileRepository (com.tsh11.fypcode.repository)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">InvestorProfileRepository$MockitoMock$X1i5bcuO</td>
+  </tr>
+  <tr>
+    <td class="name">InvestorProfileRepository$MockitoMock$X1i5bcuO$auxiliary$MMG3SLJ7</td>
+  </tr>
+  <tr>
+    <td class="name">InvestorProfileRepository$MockitoMock$X1i5bcuO$auxiliary$t9Cv7JrC</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.repository;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.investor.InvestorProfile;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;//Provides database access for InvestorProfile.
+&nbsp;//allows the system to save, update, and retrieve the investor profile for the currently logged-in user.
+&nbsp;//using userID
+&nbsp;
+&nbsp;public interface InvestorProfileRepository extends JpaRepository&lt;InvestorProfile, UUID&gt; {
+&nbsp;    Optional&lt;InvestorProfile&gt; findByUserId(UUID userId);
+&nbsp;    boolean existsByUserId(UUID userId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

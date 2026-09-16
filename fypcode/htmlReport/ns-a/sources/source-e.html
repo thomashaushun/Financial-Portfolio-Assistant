@@ -1,0 +1,268 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > HoldingResponse</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.response</a>
+</div>
+
+<h1>Coverage Summary for Class: HoldingResponse (com.tsh11.fypcode.dto.response)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">HoldingResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (35/35)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (35/35)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.response;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetClass;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;
+<b class="fc">&nbsp;public class HoldingResponse {</b>
+&nbsp;
+&nbsp;    private String symbol;
+&nbsp;    private String displayName;
+&nbsp;    private AssetClass assetClass;
+&nbsp;    private String sector;
+&nbsp;    private String market;
+&nbsp;    private boolean manualValuationRequired;
+&nbsp;    private boolean priceDataSupported;
+&nbsp;
+&nbsp;    private boolean historicalPriceSupported;
+&nbsp;    private boolean optimisationSupported;
+&nbsp;
+&nbsp;    private BigDecimal totalQuantity;
+&nbsp;    private BigDecimal averageCost;
+&nbsp;    private BigDecimal totalCost;
+&nbsp;    private String currency;
+&nbsp;    private BigDecimal latestPrice;
+&nbsp;    private BigDecimal marketValue;
+&nbsp;    private BigDecimal unrealizedGainLoss;
+&nbsp;    private BigDecimal unrealizedGainLossPercent;
+&nbsp;
+&nbsp;    public String getSymbol() {
+<b class="fc">&nbsp;        return symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSymbol(String symbol) {
+<b class="fc">&nbsp;        this.symbol = symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getDisplayName() {
+<b class="fc">&nbsp;        return displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setDisplayName(String displayName) {
+<b class="fc">&nbsp;        this.displayName = displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public AssetClass getAssetClass() {
+<b class="fc">&nbsp;        return assetClass;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAssetClass(AssetClass assetClass) {
+<b class="fc">&nbsp;        this.assetClass = assetClass;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getSector() {
+<b class="fc">&nbsp;        return sector;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSector(String sector) {
+<b class="fc">&nbsp;        this.sector = sector;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getMarket() {
+<b class="fc">&nbsp;        return market;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setMarket(String market) {
+<b class="fc">&nbsp;        this.market = market;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isManualValuationRequired() {
+<b class="fc">&nbsp;        return manualValuationRequired;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setManualValuationRequired(boolean manualValuationRequired) {
+<b class="fc">&nbsp;        this.manualValuationRequired = manualValuationRequired;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isPriceDataSupported() {
+<b class="fc">&nbsp;        return priceDataSupported;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setPriceDataSupported(boolean priceDataSupported) {
+<b class="fc">&nbsp;        this.priceDataSupported = priceDataSupported;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getTotalQuantity() {
+<b class="fc">&nbsp;        return totalQuantity;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setTotalQuantity(BigDecimal totalQuantity) {
+<b class="fc">&nbsp;        this.totalQuantity = totalQuantity;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getAverageCost() {
+<b class="fc">&nbsp;        return averageCost;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAverageCost(BigDecimal averageCost) {
+<b class="fc">&nbsp;        this.averageCost = averageCost;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getTotalCost() {
+<b class="fc">&nbsp;        return totalCost;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setTotalCost(BigDecimal totalCost) {
+<b class="fc">&nbsp;        this.totalCost = totalCost;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getCurrency() {
+<b class="fc">&nbsp;        return currency;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCurrency(String currency) {
+<b class="fc">&nbsp;        this.currency = currency;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getLatestPrice() {
+<b class="fc">&nbsp;        return latestPrice;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setLatestPrice(BigDecimal latestPrice) {
+<b class="fc">&nbsp;        this.latestPrice = latestPrice;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getMarketValue() {
+<b class="fc">&nbsp;        return marketValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setMarketValue(BigDecimal marketValue) {
+<b class="fc">&nbsp;        this.marketValue = marketValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getUnrealizedGainLoss() {
+<b class="fc">&nbsp;        return unrealizedGainLoss;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setUnrealizedGainLoss(BigDecimal unrealizedGainLoss) {
+<b class="fc">&nbsp;        this.unrealizedGainLoss = unrealizedGainLoss;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getUnrealizedGainLossPercent() {
+<b class="fc">&nbsp;        return unrealizedGainLossPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setUnrealizedGainLossPercent(BigDecimal unrealizedGainLossPercent) {
+<b class="fc">&nbsp;        this.unrealizedGainLossPercent = unrealizedGainLossPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isHistoricalPriceSupported() {
+<b class="fc">&nbsp;        return historicalPriceSupported;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setHistoricalPriceSupported(boolean historicalPriceSupported) {
+<b class="fc">&nbsp;        this.historicalPriceSupported = historicalPriceSupported;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isOptimisationSupported() {
+<b class="fc">&nbsp;        return optimisationSupported;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setOptimisationSupported(boolean optimisationSupported) {
+<b class="fc">&nbsp;        this.optimisationSupported = optimisationSupported;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+@startuml
+title Figure 4.9 Activity-Driven Portfolio Workflow
+
+skinparam shadowing false
+
+start
+
+:User records BUY / SELL activities;
+
+:ActivityService stores activities;
+
+:HoldingService aggregates activities;
+
+:Derived holdings calculated;
+
+if (Asset metadata available?) then (yes)
+  :Use stored AssetProfile metadata;
+else (no)
+  :AssetMetadataSyncService requests metadata;
+  :Store/update AssetProfile;
+endif
+
+:MarketDataService retrieves latest prices;
+
+:Calculate holding metrics\nquantity, cost, value, gain/loss;
+
+:AllocationService groups portfolio\nby holding, asset class, sector,\nmarket and currency;
+
+fork
+  :BenchmarkService compares\nportfolio with benchmark;
+fork again
+  :PortfolioOptimisationService calculates\nMean-Variance Optimisation;
+fork again
+  :FinancialAssistantService compares\nactual allocation with target allocation;
+end fork
+
+:Frontend displays tables,\ncharts, warnings and insights;
+
+if (User requests explanation?) then (yes)
+  :ExplainabilityService sends\ncalculated results to Gemini;
+  :Display beginner-friendly explanation;
+endif
+
+if (User exports PDF?) then (yes)
+  :portfolio-analysis-export.js exports\navailable page state to PDF;
+endif
+
+stop
+
+@enduml

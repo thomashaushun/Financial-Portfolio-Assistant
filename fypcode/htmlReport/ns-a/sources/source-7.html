@@ -1,0 +1,223 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AssetProfileResponse</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.response</a>
+</div>
+
+<h1>Coverage Summary for Class: AssetProfileResponse (com.tsh11.fypcode.dto.response)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AssetProfileResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/25)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/25)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.response;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetClass;
+&nbsp;import com.tsh11.fypcode.domain.asset.DataSourceType;
+&nbsp;
+&nbsp;import java.time.Instant;
+&nbsp;import java.util.UUID;
+&nbsp;
+<b class="nc">&nbsp;public class AssetProfileResponse {</b>
+&nbsp;
+&nbsp;    private UUID id;
+&nbsp;    private String symbol;
+&nbsp;    private String displayName;
+&nbsp;    private AssetClass assetClass;
+&nbsp;    private String sector;
+&nbsp;    private String market;
+&nbsp;    private String currency;
+&nbsp;    private boolean manualValuationRequired;
+&nbsp;    private boolean priceDataSupported;
+&nbsp;    private DataSourceType dataSource;
+&nbsp;    private Instant createdAt;
+&nbsp;    private Instant updatedAt;
+&nbsp;
+&nbsp;    public UUID getId() {
+<b class="nc">&nbsp;        return id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setId(UUID id) {
+<b class="nc">&nbsp;        this.id = id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getSymbol() {
+<b class="nc">&nbsp;        return symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSymbol(String symbol) {
+<b class="nc">&nbsp;        this.symbol = symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getDisplayName() {
+<b class="nc">&nbsp;        return displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setDisplayName(String displayName) {
+<b class="nc">&nbsp;        this.displayName = displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public AssetClass getAssetClass() {
+<b class="nc">&nbsp;        return assetClass;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAssetClass(AssetClass assetClass) {
+<b class="nc">&nbsp;        this.assetClass = assetClass;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getSector() {
+<b class="nc">&nbsp;        return sector;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSector(String sector) {
+<b class="nc">&nbsp;        this.sector = sector;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getMarket() {
+<b class="nc">&nbsp;        return market;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setMarket(String market) {
+<b class="nc">&nbsp;        this.market = market;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getCurrency() {
+<b class="nc">&nbsp;        return currency;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCurrency(String currency) {
+<b class="nc">&nbsp;        this.currency = currency;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isManualValuationRequired() {
+<b class="nc">&nbsp;        return manualValuationRequired;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setManualValuationRequired(boolean manualValuationRequired) {
+<b class="nc">&nbsp;        this.manualValuationRequired = manualValuationRequired;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isPriceDataSupported() {
+<b class="nc">&nbsp;        return priceDataSupported;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setPriceDataSupported(boolean priceDataSupported) {
+<b class="nc">&nbsp;        this.priceDataSupported = priceDataSupported;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public DataSourceType getDataSource() {
+<b class="nc">&nbsp;        return dataSource;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setDataSource(DataSourceType dataSource) {
+<b class="nc">&nbsp;        this.dataSource = dataSource;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Instant getCreatedAt() {
+<b class="nc">&nbsp;        return createdAt;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCreatedAt(Instant createdAt) {
+<b class="nc">&nbsp;        this.createdAt = createdAt;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Instant getUpdatedAt() {
+<b class="nc">&nbsp;        return updatedAt;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setUpdatedAt(Instant updatedAt) {
+<b class="nc">&nbsp;        this.updatedAt = updatedAt;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

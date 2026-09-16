@@ -1,0 +1,43 @@
+@startuml
+title Figure 4.10 Portfolio Optimisation Sequence
+
+actor User
+participant "analysis.html\nportfolio-analysis.js" as Frontend
+participant "PortfolioAnalysisController" as Controller
+participant "PortfolioOptimisationService" as OptimisationService
+participant "HoldingService" as HoldingService
+participant "MarketDataService" as MarketDataService
+participant "MeanVarianceOptimisationAlgorithm" as MVO
+participant "PortfolioStatisticsCalculator" as Stats
+participant "RebalanceSuggestionCalculator" as Rebalance
+database "Repositories" as Repos
+participant "<<external>>\nAlpha Vantage API" as Alpha
+
+User -> Frontend : Click Run Optimisation
+Frontend -> Controller : AJAX optimisation request
+
+Controller -> OptimisationService : calculate optimisation
+
+OptimisationService -> HoldingService : get eligible holdings
+HoldingService -> Repos : read activities and asset profiles
+Repos --> HoldingService : activity + metadata
+HoldingService --> OptimisationService : derived holdings
+
+OptimisationService -> MarketDataService : get historical prices
+MarketDataService -> Alpha : request historical price data
+Alpha --> MarketDataService : historical prices
+MarketDataService --> OptimisationService : price series
+
+OptimisationService -> MVO : calculate efficient frontier and target weights
+MVO -> Stats : calculate return, volatility, Sharpe ratio
+Stats --> MVO : portfolio metrics
+MVO --> OptimisationService : optimisation result
+
+OptimisationService -> Rebalance : calculate suggested allocation changes
+Rebalance --> OptimisationService : suggested changes
+
+OptimisationService --> Controller : PortfolioOptimisationResult
+Controller --> Frontend : JSON response
+Frontend --> User : Display metrics, weights,\nfrontier, suggestions and warnings
+
+@enduml

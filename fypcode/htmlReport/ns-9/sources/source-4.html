@@ -1,0 +1,219 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PortfolioExplanationRequest</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.request</a>
+</div>
+
+<h1>Coverage Summary for Class: PortfolioExplanationRequest (com.tsh11.fypcode.dto.request)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PortfolioExplanationRequest</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/23)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/26)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.request;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.dto.ExplanationMode;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioAlgorithm;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioMetricsDto;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationAssetResult;
+&nbsp;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.List;
+&nbsp;
+<b class="nc">&nbsp;public class PortfolioExplanationRequest {</b>
+&nbsp;
+&nbsp;    private ExplanationMode mode;
+&nbsp;    private String userQuestion;
+&nbsp;    private String term;
+&nbsp;    private PortfolioAlgorithm algorithm;
+&nbsp;
+&nbsp;    private PortfolioMetricsDto currentPortfolio;
+&nbsp;    private PortfolioMetricsDto optimisedPortfolio;
+&nbsp;
+<b class="nc">&nbsp;    private List&lt;PortfolioOptimisationAssetResult&gt; assets = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;    private List&lt;String&gt; suggestions = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;    private List&lt;String&gt; warnings = new ArrayList&lt;&gt;();</b>
+&nbsp;
+&nbsp;    private String benchmarkSymbol;
+&nbsp;    private String benchmarkSummary;
+&nbsp;
+&nbsp;    public ExplanationMode getMode() {
+<b class="nc">&nbsp;        return mode;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setMode(ExplanationMode mode) {
+<b class="nc">&nbsp;        this.mode = mode;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getUserQuestion() {
+<b class="nc">&nbsp;        return userQuestion;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setUserQuestion(String userQuestion) {
+<b class="nc">&nbsp;        this.userQuestion = userQuestion;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getTerm() {
+<b class="nc">&nbsp;        return term;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setTerm(String term) {
+<b class="nc">&nbsp;        this.term = term;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public PortfolioAlgorithm getAlgorithm() {
+<b class="nc">&nbsp;        return algorithm;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAlgorithm(PortfolioAlgorithm algorithm) {
+<b class="nc">&nbsp;        this.algorithm = algorithm;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public PortfolioMetricsDto getCurrentPortfolio() {
+<b class="nc">&nbsp;        return currentPortfolio;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCurrentPortfolio(PortfolioMetricsDto currentPortfolio) {
+<b class="nc">&nbsp;        this.currentPortfolio = currentPortfolio;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public PortfolioMetricsDto getOptimisedPortfolio() {
+<b class="nc">&nbsp;        return optimisedPortfolio;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setOptimisedPortfolio(PortfolioMetricsDto optimisedPortfolio) {
+<b class="nc">&nbsp;        this.optimisedPortfolio = optimisedPortfolio;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;PortfolioOptimisationAssetResult&gt; getAssets() {
+<b class="nc">&nbsp;        return assets;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAssets(List&lt;PortfolioOptimisationAssetResult&gt; assets) {
+<b class="nc">&nbsp;        this.assets = assets;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;String&gt; getSuggestions() {
+<b class="nc">&nbsp;        return suggestions;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSuggestions(List&lt;String&gt; suggestions) {
+<b class="nc">&nbsp;        this.suggestions = suggestions;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;String&gt; getWarnings() {
+<b class="nc">&nbsp;        return warnings;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setWarnings(List&lt;String&gt; warnings) {
+<b class="nc">&nbsp;        this.warnings = warnings;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getBenchmarkSymbol() {
+<b class="nc">&nbsp;        return benchmarkSymbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setBenchmarkSymbol(String benchmarkSymbol) {
+<b class="nc">&nbsp;        this.benchmarkSymbol = benchmarkSymbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getBenchmarkSummary() {
+<b class="nc">&nbsp;        return benchmarkSummary;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setBenchmarkSummary(String benchmarkSummary) {
+<b class="nc">&nbsp;        this.benchmarkSummary = benchmarkSummary;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

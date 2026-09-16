@@ -1,0 +1,39 @@
+@startuml
+title Figure 4.8 Persistence and Repository Design
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Domain Entities" {
+  component "AppUser" as AppUser
+  component "Activity" as Activity
+  component "AssetProfile" as AssetProfile
+  component "InvestorProfile" as InvestorProfile
+}
+
+package "Spring Data Repository Layer" {
+  component "UserRepository" as UserRepository
+  component "ActivityRepository" as ActivityRepository
+  component "AssetProfileRepository" as AssetProfileRepository
+  component "InvestorProfileRepository" as InvestorProfileRepository
+}
+
+database "PostgreSQL Database" as DB
+
+AppUser  -->  Activity : owns
+AppUser  -->  AssetProfile : owns
+AppUser  -->  InvestorProfile : has
+
+UserRepository --> AppUser
+ActivityRepository --> Activity
+AssetProfileRepository --> AssetProfile
+InvestorProfileRepository --> InvestorProfile
+
+UserRepository --> DB
+ActivityRepository --> DB
+AssetProfileRepository --> DB
+InvestorProfileRepository --> DB
+
+
+@enduml

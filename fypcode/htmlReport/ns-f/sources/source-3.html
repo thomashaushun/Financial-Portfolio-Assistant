@@ -1,0 +1,292 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AssetMetadataSyncService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service</a>
+</div>
+
+<h1>Coverage Summary for Class: AssetMetadataSyncService (com.tsh11.fypcode.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AssetMetadataSyncService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    78.3%
+  </span>
+  <span class="absValue">
+    (36/46)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92.5%
+  </span>
+  <span class="absValue">
+    (74/80)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetClass;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetProfile;
+&nbsp;import com.tsh11.fypcode.domain.asset.DataSourceType;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.AssetMetadata;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.MarketDataProvider;
+&nbsp;import com.tsh11.fypcode.repository.AssetProfileRepository;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;@Service
+&nbsp;@Transactional
+&nbsp;public class AssetMetadataSyncService {
+&nbsp;
+&nbsp;    private final AssetProfileRepository assetProfileRepository;
+&nbsp;    private final MarketDataProvider marketDataProvider;
+&nbsp;
+&nbsp;    public AssetMetadataSyncService(AssetProfileRepository assetProfileRepository,
+<b class="fc">&nbsp;                                    MarketDataProvider marketDataProvider) {</b>
+<b class="fc">&nbsp;        this.assetProfileRepository = assetProfileRepository;</b>
+<b class="fc">&nbsp;        this.marketDataProvider = marketDataProvider;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void ensureMetadataForSymbol(UUID userId, String symbol, String fallbackCurrency) {
+<b class="fc">&nbsp;        if (userId == null || isBlank(symbol)) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String normalizedSymbol = normalizeSymbol(symbol);</b>
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;AssetMetadata&gt; metadataOptional = marketDataProvider.getAssetMetadata(normalizedSymbol);</b>
+<b class="fc">&nbsp;        if (metadataOptional.isEmpty()) {</b>
+<b class="fc">&nbsp;            createFallbackProfileIfMissing(userId, normalizedSymbol, fallbackCurrency);</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        AssetMetadata metadata = metadataOptional.get();</b>
+&nbsp;
+<b class="fc">&nbsp;        AssetProfile profile = assetProfileRepository</b>
+<b class="fc">&nbsp;                .findByUserIdAndSymbolIgnoreCase(userId, normalizedSymbol)</b>
+<b class="fc">&nbsp;                .orElseGet(AssetProfile::new);</b>
+&nbsp;
+<b class="pc">&nbsp;        boolean newProfile = profile.getId() == null;</b>
+&nbsp;
+<b class="pc">&nbsp;        if (newProfile) {</b>
+<b class="fc">&nbsp;            profile.setUserId(userId);</b>
+<b class="fc">&nbsp;            profile.setSymbol(normalizedSymbol);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        boolean manualOverride = profile.getDataSource() == DataSourceType.MANUAL;</b>
+&nbsp;
+<b class="fc">&nbsp;        if (manualOverride) {</b>
+<b class="fc">&nbsp;            applyMinimalMetadataToManualProfile(profile, metadata, normalizedSymbol, fallbackCurrency);</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            applyProviderMetadata(profile, metadata, normalizedSymbol, fallbackCurrency);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        assetProfileRepository.save(profile);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void createFallbackProfileIfMissing(UUID userId, String symbol, String fallbackCurrency) {
+<b class="fc">&nbsp;        boolean exists = assetProfileRepository.existsByUserIdAndSymbolIgnoreCase(userId, symbol);</b>
+<b class="fc">&nbsp;        if (exists) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        AssetProfile profile = new AssetProfile();</b>
+<b class="fc">&nbsp;        profile.setUserId(userId);</b>
+<b class="fc">&nbsp;        profile.setSymbol(symbol);</b>
+<b class="fc">&nbsp;        profile.setDisplayName(symbol);</b>
+<b class="fc">&nbsp;        profile.setAssetClass(AssetClass.OTHER);</b>
+<b class="fc">&nbsp;        profile.setSector(null);</b>
+<b class="fc">&nbsp;        profile.setMarket(null);</b>
+<b class="fc">&nbsp;        profile.setCurrency(resolveCurrency(null, fallbackCurrency));</b>
+<b class="fc">&nbsp;        profile.setManualValuationRequired(false);</b>
+<b class="fc">&nbsp;        profile.setPriceDataSupported(false);</b>
+<b class="fc">&nbsp;        profile.setDataSource(DataSourceType.OTHER);</b>
+&nbsp;
+<b class="fc">&nbsp;        profile.setProviderAssetType(null);</b>
+<b class="fc">&nbsp;        profile.setQuoteSupported(false);</b>
+<b class="fc">&nbsp;        profile.setHistoricalPriceSupported(false);</b>
+<b class="fc">&nbsp;        profile.setOptimisationSupported(false);</b>
+&nbsp;
+<b class="fc">&nbsp;        assetProfileRepository.save(profile);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void applyProviderMetadata(AssetProfile profile,
+&nbsp;                                       AssetMetadata metadata,
+&nbsp;                                       String symbol,
+&nbsp;                                       String fallbackCurrency) {
+<b class="fc">&nbsp;        AssetClass resolvedAssetClass = metadata.getAssetClass() != null</b>
+<b class="fc">&nbsp;                ? metadata.getAssetClass()</b>
+<b class="fc">&nbsp;                : AssetClass.OTHER;</b>
+&nbsp;
+<b class="fc">&nbsp;        profile.setSymbol(symbol);</b>
+<b class="fc">&nbsp;        profile.setDisplayName(defaultDisplayName(metadata, symbol));</b>
+<b class="fc">&nbsp;        profile.setAssetClass(resolvedAssetClass);</b>
+<b class="fc">&nbsp;        profile.setSector(blankToNull(metadata.getSector()));</b>
+<b class="fc">&nbsp;        profile.setMarket(blankToNull(metadata.getMarket()));</b>
+<b class="fc">&nbsp;        profile.setCurrency(resolveCurrency(metadata, fallbackCurrency));</b>
+&nbsp;
+<b class="fc">&nbsp;        profile.setManualValuationRequired(metadata.isManualValuationRequired());</b>
+<b class="fc">&nbsp;        profile.setPriceDataSupported(metadata.isPriceDataSupported());</b>
+<b class="fc">&nbsp;        profile.setDataSource(metadata.getDataSource() != null</b>
+<b class="fc">&nbsp;                ? metadata.getDataSource()</b>
+<b class="fc">&nbsp;                : DataSourceType.ALPHA_VANTAGE);</b>
+&nbsp;
+<b class="fc">&nbsp;        profile.setProviderAssetType(blankToNull(metadata.getProviderAssetType()));</b>
+<b class="fc">&nbsp;        profile.setQuoteSupported(metadata.isQuoteSupported());</b>
+<b class="fc">&nbsp;        profile.setHistoricalPriceSupported(metadata.isHistoricalPriceSupported());</b>
+<b class="fc">&nbsp;        profile.setOptimisationSupported(metadata.isOptimisationSupported());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void applyMinimalMetadataToManualProfile(AssetProfile profile,
+&nbsp;                                                     AssetMetadata metadata,
+&nbsp;                                                     String symbol,
+&nbsp;                                                     String fallbackCurrency) {
+<b class="pc">&nbsp;        if (isBlank(profile.getSymbol())) {</b>
+<b class="nc">&nbsp;            profile.setSymbol(symbol);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (isBlank(profile.getDisplayName())) {</b>
+<b class="nc">&nbsp;            profile.setDisplayName(defaultDisplayName(metadata, symbol));</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (profile.getAssetClass() == null) {</b>
+<b class="nc">&nbsp;            profile.setAssetClass(metadata.getAssetClass() != null</b>
+<b class="nc">&nbsp;                    ? metadata.getAssetClass()</b>
+<b class="nc">&nbsp;                    : AssetClass.OTHER);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (isBlank(profile.getCurrency())) {</b>
+<b class="nc">&nbsp;            profile.setCurrency(resolveCurrency(metadata, fallbackCurrency));</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (isBlank(profile.getProviderAssetType())) {</b>
+<b class="fc">&nbsp;            profile.setProviderAssetType(blankToNull(metadata.getProviderAssetType()));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;    private String defaultDisplayName(AssetMetadata metadata, String symbol) {
+<b class="pc">&nbsp;        if (metadata != null &amp;&amp; !isBlank(metadata.getDisplayName())) {</b>
+<b class="fc">&nbsp;            return metadata.getDisplayName().trim();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String resolveCurrency(AssetMetadata metadata, String fallbackCurrency) {
+<b class="fc">&nbsp;        if (metadata != null &amp;&amp; !isBlank(metadata.getCurrency())) {</b>
+<b class="fc">&nbsp;            return metadata.getCurrency().trim().toUpperCase();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (!isBlank(fallbackCurrency)) {</b>
+<b class="fc">&nbsp;            return fallbackCurrency.trim().toUpperCase();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return &quot;USD&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String normalizeSymbol(String symbol) {
+<b class="fc">&nbsp;        return symbol.trim().toUpperCase();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String blankToNull(String value) {
+<b class="fc">&nbsp;        return isBlank(value) ? null : value.trim();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean isBlank(String value) {
+<b class="fc">&nbsp;        return value == null || value.trim().isEmpty();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

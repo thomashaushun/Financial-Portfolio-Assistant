@@ -1,0 +1,272 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AssistantInsightService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.assistant</a>
+</div>
+
+<h1>Coverage Summary for Class: AssistantInsightService (com.tsh11.fypcode.service.assistant)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AssistantInsightService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (8/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    76.3%
+  </span>
+  <span class="absValue">
+    (29/38)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    97.9%
+  </span>
+  <span class="absValue">
+    (47/48)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.assistant;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.investor.InsightSeverity;
+&nbsp;import com.tsh11.fypcode.domain.investor.RiskProfileType;
+&nbsp;import com.tsh11.fypcode.dto.response.ActualAllocationResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.AllocationComparisonResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.AssistantInsightResponse;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.List;
+&nbsp;//Turns suitability analysis results into human-readable insights.
+&nbsp;//input:
+&nbsp;//Bond target = 30%
+&nbsp;//Bond actual = 0%
+&nbsp;//Difference = -30%
+&nbsp;//output:
+&nbsp;//Your portfolio has no bond exposure, which may make it less defensive than the target allocation for your profile.
+&nbsp;@Service
+<b class="fc">&nbsp;public class AssistantInsightService {</b>
+&nbsp;
+<b class="fc">&nbsp;    private static final BigDecimal ALTERNATIVE_NOTICE_THRESHOLD = BigDecimal.valueOf(10);</b>
+<b class="fc">&nbsp;    private static final BigDecimal UNCLASSIFIED_NOTICE_THRESHOLD = BigDecimal.valueOf(5);</b>
+&nbsp;
+&nbsp;    public List&lt;AssistantInsightResponse&gt; buildInsights(RiskProfileType riskProfileType,
+&nbsp;                                                         List&lt;AllocationComparisonResponse&gt; comparisons,
+&nbsp;                                                         ActualAllocationResponse actualAllocation) {
+<b class="fc">&nbsp;        List&lt;AssistantInsightResponse&gt; insights = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (actualAllocation == null || actualAllocation.getTotalPortfolioValue().compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+<b class="fc">&nbsp;            insights.add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.INFO,
+&nbsp;                    &quot;No portfolio value available&quot;,
+&nbsp;                    &quot;Add activities and asset profiles so the assistant can compare your portfolio with your investor profile.&quot;
+&nbsp;            ));
+<b class="fc">&nbsp;            return insights;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        boolean hasMajorTraditionalMismatch = false;</b>
+&nbsp;
+<b class="pc">&nbsp;        if (comparisons != null) {</b>
+<b class="fc">&nbsp;            for (AllocationComparisonResponse comparison : comparisons) {</b>
+<b class="pc">&nbsp;                if (comparison == null || &quot;WITHIN_TARGET_RANGE&quot;.equals(comparison.getStatus())) {</b>
+&nbsp;                    continue;
+&nbsp;                }
+&nbsp;
+<b class="pc">&nbsp;                InsightSeverity severity = comparison.getStatus().startsWith(&quot;SIGNIFICANTLY&quot;)</b>
+<b class="fc">&nbsp;                        ? InsightSeverity.WARNING</b>
+<b class="fc">&nbsp;                        : InsightSeverity.INFO;</b>
+&nbsp;
+<b class="pc">&nbsp;                if (severity == InsightSeverity.WARNING) {</b>
+<b class="fc">&nbsp;                    hasMajorTraditionalMismatch = true;</b>
+&nbsp;                }
+&nbsp;
+<b class="fc">&nbsp;                insights.add(new AssistantInsightResponse(</b>
+&nbsp;                        severity,
+<b class="fc">&nbsp;                        formatBucket(comparison.getBucket()) + &quot; allocation drift&quot;,</b>
+<b class="fc">&nbsp;                        buildTraditionalAllocationMessage(riskProfileType, comparison)</b>
+&nbsp;                ));
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        addAlternativeAssetInsights(insights, actualAllocation);</b>
+&nbsp;
+<b class="fc">&nbsp;        if (!hasMajorTraditionalMismatch &amp;&amp; insights.isEmpty()) {</b>
+<b class="fc">&nbsp;            insights.add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.INFO,
+&nbsp;                    &quot;Portfolio broadly matches profile&quot;,
+&nbsp;                    &quot;Your equity, bond, and cash allocation is within the assistant&#39;s tolerance range for a &quot;
+<b class="fc">&nbsp;                            + formatProfile(riskProfileType) + &quot; profile.&quot;</b>
+&nbsp;            ));
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        insights.add(new AssistantInsightResponse(</b>
+&nbsp;                InsightSeverity.INFO,
+&nbsp;                &quot;Educational guidance only&quot;,
+&nbsp;                &quot;These insights are rule-based educational guidance, not regulated financial advice.&quot;
+&nbsp;        ));
+&nbsp;
+<b class="fc">&nbsp;        return insights;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildTraditionalAllocationMessage(RiskProfileType riskProfileType,
+&nbsp;                                                     AllocationComparisonResponse comparison) {
+<b class="fc">&nbsp;        String bucket = formatBucket(comparison.getBucket());</b>
+<b class="fc">&nbsp;        String profile = formatProfile(riskProfileType);</b>
+<b class="pc">&nbsp;        String direction = comparison.getDifferencePercent().signum() &gt; 0 ? &quot;above&quot; : &quot;below&quot;;</b>
+&nbsp;
+<b class="fc">&nbsp;        return bucket + &quot; exposure is &quot; + comparison.getDifferencePercent().abs().setScale(2, java.math.RoundingMode.HALF_UP)</b>
+&nbsp;                + &quot;% &quot; + direction + &quot; the target for a &quot; + profile
+&nbsp;                + &quot; profile. Consider reviewing whether this allocation still matches the selected risk profile.&quot;;
+&nbsp;    }
+&nbsp;
+&nbsp;    private void addAlternativeAssetInsights(List&lt;AssistantInsightResponse&gt; insights,
+&nbsp;                                             ActualAllocationResponse actualAllocation) {
+<b class="fc">&nbsp;        if (actualAllocation.getCryptoPercent().compareTo(ALTERNATIVE_NOTICE_THRESHOLD) &gt;= 0) {</b>
+<b class="fc">&nbsp;            insights.add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.WARNING,
+&nbsp;                    &quot;Crypto exposure detected&quot;,
+<b class="fc">&nbsp;                    &quot;Crypto represents &quot; + displayPercent(actualAllocation.getCryptoPercent())</b>
+&nbsp;                            + &quot; of the portfolio. The assistant treats crypto as alternative high-risk exposure rather than equity.&quot;
+&nbsp;            ));
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (actualAllocation.getRealEstatePercent().compareTo(ALTERNATIVE_NOTICE_THRESHOLD) &gt;= 0) {</b>
+<b class="fc">&nbsp;            insights.add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.INFO,
+&nbsp;                    &quot;Real estate exposure detected&quot;,
+<b class="fc">&nbsp;                    &quot;Real estate represents &quot; + displayPercent(actualAllocation.getRealEstatePercent())</b>
+&nbsp;                            + &quot; of the portfolio and is shown separately from the equity-bond-cash target model.&quot;
+&nbsp;            ));
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (actualAllocation.getOtherPercent().compareTo(ALTERNATIVE_NOTICE_THRESHOLD) &gt;= 0) {</b>
+<b class="fc">&nbsp;            insights.add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.INFO,
+&nbsp;                    &quot;Other asset exposure detected&quot;,
+<b class="fc">&nbsp;                    &quot;Assets classified as Other represent &quot; + displayPercent(actualAllocation.getOtherPercent())</b>
+&nbsp;                            + &quot; of the portfolio. Check asset profiles if these should be classified more precisely.&quot;
+&nbsp;            ));
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (actualAllocation.getUnclassifiedPercent().compareTo(UNCLASSIFIED_NOTICE_THRESHOLD) &gt;= 0) {</b>
+<b class="fc">&nbsp;            insights.add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.WARNING,
+&nbsp;                    &quot;Unclassified assets detected&quot;,
+<b class="fc">&nbsp;                    &quot;Unclassified assets represent &quot; + displayPercent(actualAllocation.getUnclassifiedPercent())</b>
+&nbsp;                            + &quot; of the portfolio. Complete asset profiles to improve assistant accuracy.&quot;
+&nbsp;            ));
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (actualAllocation.isEtfAssumptionUsed()) {</b>
+<b class="fc">&nbsp;            insights.add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.INFO,
+&nbsp;                    &quot;ETF classification note&quot;,
+&nbsp;                    &quot;ETF holdings are currently counted as equity exposure unless more detailed fund metadata is available.&quot;
+&nbsp;            ));
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatBucket(String bucket) {
+<b class="pc">&nbsp;        if (bucket == null || bucket.isBlank()) {</b>
+<b class="nc">&nbsp;            return &quot;Unknown&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return bucket.charAt(0) + bucket.substring(1).toLowerCase();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String formatProfile(RiskProfileType riskProfileType) {
+<b class="pc">&nbsp;        return riskProfileType == null ? &quot;selected&quot; : riskProfileType.name().toLowerCase().replace(&#39;_&#39;, &#39; &#39;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String displayPercent(BigDecimal value) {
+<b class="fc">&nbsp;        return value.setScale(2, java.math.RoundingMode.HALF_UP) + &quot;%&quot;;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

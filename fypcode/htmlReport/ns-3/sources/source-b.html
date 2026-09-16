@@ -1,0 +1,165 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PortfolioAnalysisController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: PortfolioAnalysisController (com.tsh11.fypcode.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PortfolioAnalysisController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/7)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.controller;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioAlgorithm;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationResult;
+&nbsp;import com.tsh11.fypcode.dto.response.BenchmarkComparisonResponse;
+&nbsp;import com.tsh11.fypcode.security.AppUserPrincipal;
+&nbsp;import com.tsh11.fypcode.service.BenchmarkService;
+&nbsp;import com.tsh11.fypcode.service.PortfolioOptimisationService;
+&nbsp;import org.springframework.format.annotation.DateTimeFormat;
+&nbsp;import org.springframework.security.core.annotation.AuthenticationPrincipal;
+&nbsp;import org.springframework.web.bind.annotation.GetMapping;
+&nbsp;import org.springframework.web.bind.annotation.RequestMapping;
+&nbsp;import org.springframework.web.bind.annotation.RequestParam;
+&nbsp;import org.springframework.web.bind.annotation.RestController;
+&nbsp;
+&nbsp;import java.time.LocalDate;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/portfolio/analysis&quot;)
+&nbsp;public class PortfolioAnalysisController {
+&nbsp;
+&nbsp;    private final BenchmarkService benchmarkService;
+&nbsp;    private final PortfolioOptimisationService portfolioOptimisationService;
+&nbsp;
+&nbsp;    public PortfolioAnalysisController(
+&nbsp;            BenchmarkService benchmarkService,
+<b class="fc">&nbsp;            PortfolioOptimisationService portfolioOptimisationService) {</b>
+<b class="fc">&nbsp;        this.benchmarkService = benchmarkService;</b>
+<b class="fc">&nbsp;        this.portfolioOptimisationService = portfolioOptimisationService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/benchmark&quot;)
+&nbsp;    public BenchmarkComparisonResponse benchmark(
+&nbsp;            @RequestParam String symbol,
+&nbsp;            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+&nbsp;            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+&nbsp;            @AuthenticationPrincipal AppUserPrincipal principal) {
+&nbsp;
+<b class="fc">&nbsp;        return benchmarkService.compareAgainstBenchmark(</b>
+<b class="fc">&nbsp;                principal.getUserId(),</b>
+&nbsp;                symbol,
+&nbsp;                from,
+&nbsp;                to
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/optimise&quot;)
+&nbsp;    public PortfolioOptimisationResult optimise(
+&nbsp;            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+&nbsp;            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+&nbsp;            @RequestParam(defaultValue = &quot;MEAN_VARIANCE&quot;) PortfolioAlgorithm algorithm,
+&nbsp;            @AuthenticationPrincipal AppUserPrincipal principal) {
+&nbsp;
+<b class="fc">&nbsp;        return portfolioOptimisationService.optimise(</b>
+<b class="fc">&nbsp;                principal.getUserId(),</b>
+&nbsp;                from,
+&nbsp;                to,
+&nbsp;                algorithm
+&nbsp;        );
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,146 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SecurityConfig</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.config</a>
+</div>
+
+<h1>Coverage Summary for Class: SecurityConfig (com.tsh11.fypcode.config)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SecurityConfig</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/14)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.config;
+&nbsp;
+&nbsp;import org.springframework.context.annotation.Bean;
+&nbsp;import org.springframework.context.annotation.Configuration;
+&nbsp;import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+&nbsp;import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+&nbsp;import org.springframework.security.crypto.password.PasswordEncoder;
+&nbsp;import org.springframework.security.web.SecurityFilterChain;
+&nbsp;
+&nbsp;@Configuration
+<b class="nc">&nbsp;public class SecurityConfig {</b>
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+<b class="nc">&nbsp;        http</b>
+<b class="nc">&nbsp;                .authorizeHttpRequests(auth -&gt; auth</b>
+<b class="nc">&nbsp;                        .requestMatchers(</b>
+&nbsp;                                &quot;/register&quot;,
+&nbsp;                                &quot;/login&quot;,
+&nbsp;                                &quot;/error&quot;,
+&nbsp;                                &quot;/css/**&quot;,
+&nbsp;                                &quot;/js/**&quot;
+<b class="nc">&nbsp;                        ).permitAll()</b>
+<b class="nc">&nbsp;                        .anyRequest().authenticated()</b>
+&nbsp;                )
+<b class="nc">&nbsp;                .formLogin(form -&gt; form</b>
+<b class="nc">&nbsp;                        .loginPage(&quot;/login&quot;)</b>
+<b class="nc">&nbsp;                        .defaultSuccessUrl(&quot;/portfolio/overview&quot;, true)</b>
+<b class="nc">&nbsp;                        .permitAll()</b>
+&nbsp;                )
+<b class="nc">&nbsp;                .logout(logout -&gt; logout</b>
+<b class="nc">&nbsp;                        .logoutSuccessUrl(&quot;/login?logout&quot;)</b>
+&nbsp;                );
+&nbsp;
+<b class="nc">&nbsp;        return http.build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public PasswordEncoder passwordEncoder() {
+<b class="nc">&nbsp;        return new BCryptPasswordEncoder();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

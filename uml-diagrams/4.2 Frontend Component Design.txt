@@ -1,0 +1,66 @@
+@startuml
+title Frontend Component Design
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+node "User Browser" {
+  package "Thymeleaf Templates" {
+    component "overview.html" as Overview
+    component "activities.html" as Activities
+    component "holdings.html" as Holdings
+    component "asset-profiles.html" as AssetProfiles
+    component "allocation.html" as Allocation
+    component "analysis.html" as Analysis
+    component "investor-profile.html" as InvestorProfile
+    component "login.html / register.html" as AuthPages
+  }
+
+  package "Static JavaScript" {
+    component "portfolio-overview.js" as OverviewJS
+    component "portfolio-activities.js" as ActivitiesJS
+    component "portfolio-holdings.js" as HoldingsJS
+    component "portfolio-asset-profiles.js" as AssetProfilesJS
+    component "portfolio-allocation.js" as AllocationJS
+    component "portfolio-analysis.js" as AnalysisJS
+    component "portfolio-analysis-export.js" as ExportJS
+    component "portfolio-investor-profile.js" as InvestorProfileJS
+  }
+
+  component "Bootstrap UI" as Bootstrap
+  component "Chart.js" as ChartJS
+  component "jsPDF + jspdf-autotable" as PdfLib
+}
+
+cloud "Spring Boot REST/API Controllers" as Api
+
+Overview --> OverviewJS
+Activities --> ActivitiesJS
+Holdings --> HoldingsJS
+AssetProfiles --> AssetProfilesJS
+Allocation --> AllocationJS
+Analysis --> AnalysisJS
+Analysis --> ExportJS
+InvestorProfile --> InvestorProfileJS
+
+OverviewJS --> Api : AJAX
+ActivitiesJS --> Api : AJAX
+HoldingsJS --> Api : AJAX
+AssetProfilesJS --> Api : AJAX
+AllocationJS --> Api : AJAX
+AnalysisJS --> Api : AJAX
+InvestorProfileJS --> Api : AJAX
+
+AllocationJS --> ChartJS
+AnalysisJS --> ChartJS
+ExportJS --> PdfLib
+ExportJS --> ChartJS : canvas.toDataURL()
+
+Bootstrap ..> Overview
+Bootstrap ..> Activities
+Bootstrap ..> Holdings
+Bootstrap ..> Allocation
+Bootstrap ..> Analysis
+
+@enduml

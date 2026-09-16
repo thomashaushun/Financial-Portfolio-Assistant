@@ -1,0 +1,550 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PortfolioOptimisationService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service</a>
+</div>
+
+<h1>Coverage Summary for Class: PortfolioOptimisationService (com.tsh11.fypcode.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PortfolioOptimisationService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95.5%
+  </span>
+  <span class="absValue">
+    (21/22)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    74.6%
+  </span>
+  <span class="absValue">
+    (85/114)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95.7%
+  </span>
+  <span class="absValue">
+    (178/186)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetClass;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioAlgorithm;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationAssetResult;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationRequest;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationResult;
+&nbsp;import com.tsh11.fypcode.dto.response.HoldingResponse;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.HistoricalPricePoint;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.MarketDataProvider;
+&nbsp;import com.tsh11.fypcode.service.portfolio.PortfolioConstraintSet;
+&nbsp;import com.tsh11.fypcode.service.portfolio.PortfolioOptimisationAlgorithm;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.math.MathContext;
+&nbsp;import java.time.LocalDate;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.LinkedHashMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.UUID;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Service
+&nbsp;public class PortfolioOptimisationService {
+&nbsp;
+<b class="fc">&nbsp;    private static final MathContext MC = MathContext.DECIMAL64;</b>
+<b class="fc">&nbsp;    private static final BigDecimal DEFAULT_RISK_FREE_RATE = new BigDecimal(&quot;0.02&quot;);</b>
+&nbsp;
+&nbsp;    private final HoldingService holdingService;
+&nbsp;    private final MarketDataProvider marketDataProvider;
+&nbsp;    private final List&lt;PortfolioOptimisationAlgorithm&gt; algorithms;
+&nbsp;    private final AssetProfileService assetProfileService;
+&nbsp;
+&nbsp;    public PortfolioOptimisationService(
+&nbsp;            HoldingService holdingService,
+&nbsp;            MarketDataProvider marketDataProvider,
+&nbsp;            List&lt;PortfolioOptimisationAlgorithm&gt; algorithms,
+<b class="fc">&nbsp;            AssetProfileService assetProfileService) {</b>
+<b class="fc">&nbsp;        this.holdingService = holdingService;</b>
+<b class="fc">&nbsp;        this.marketDataProvider = marketDataProvider;</b>
+<b class="fc">&nbsp;        this.algorithms = algorithms;</b>
+<b class="fc">&nbsp;        this.assetProfileService = assetProfileService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public PortfolioOptimisationResult optimise(
+&nbsp;            UUID userId,
+&nbsp;            LocalDate from,
+&nbsp;            LocalDate to,
+&nbsp;            PortfolioAlgorithm algorithmType) {
+&nbsp;
+<b class="fc">&nbsp;        validateInputs(userId, from, to, algorithmType);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;HoldingResponse&gt; allHoldings = holdingService.getHoldings(userId);</b>
+<b class="fc">&nbsp;        List&lt;HoldingResponse&gt; eligibleHoldings = filterEligibleHoldings(allHoldings);</b>
+&nbsp;
+&nbsp;        //logging start
+<b class="fc">&nbsp;        System.out.println(&quot;Eligible holdings:&quot;);</b>
+<b class="fc">&nbsp;        for (HoldingResponse holding : eligibleHoldings) {</b>
+<b class="fc">&nbsp;            System.out.println(</b>
+<b class="fc">&nbsp;                    holding.getSymbol()</b>
+<b class="fc">&nbsp;                            + &quot; | class=&quot; + holding.getAssetClass()</b>
+<b class="fc">&nbsp;                            + &quot; | manual=&quot; + holding.isManualValuationRequired()</b>
+<b class="fc">&nbsp;                            + &quot; | priceSupported=&quot; + holding.isPriceDataSupported()</b>
+<b class="fc">&nbsp;                            + &quot; | marketValue=&quot; + holding.getMarketValue()</b>
+&nbsp;            );
+&nbsp;        }
+&nbsp;        //loggin end
+&nbsp;
+<b class="fc">&nbsp;        if (eligibleHoldings.isEmpty()) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;No eligible assets available for portfolio optimisation.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; currentWeights = calculateCurrentWeights(eligibleHoldings);</b>
+<b class="fc">&nbsp;        Map&lt;String, List&lt;BigDecimal&gt;&gt; dailyReturns = buildDailyReturns(userId, eligibleHoldings, from, to);</b>
+<b class="fc">&nbsp;        List&lt;String&gt; symbols = new ArrayList&lt;&gt;(dailyReturns.keySet());</b>
+&nbsp;
+<b class="fc">&nbsp;        if (symbols.size() &lt; 2) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;At least two eligible assets with historical data are required.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        PortfolioOptimisationRequest request = new PortfolioOptimisationRequest();</b>
+<b class="fc">&nbsp;        request.setAlgorithm(algorithmType);</b>
+<b class="fc">&nbsp;        request.setFrom(from);</b>
+<b class="fc">&nbsp;        request.setTo(to);</b>
+<b class="fc">&nbsp;        request.setRiskFreeRate(DEFAULT_RISK_FREE_RATE);</b>
+<b class="fc">&nbsp;        request.setSymbols(symbols);</b>
+<b class="fc">&nbsp;        request.setCurrentWeights(retainMatchingWeights(currentWeights, symbols));</b>
+<b class="fc">&nbsp;        request.setDailyReturns(dailyReturns);</b>
+<b class="fc">&nbsp;        request.setConstraints(defaultConstraints());</b>
+&nbsp;
+<b class="fc">&nbsp;        PortfolioOptimisationAlgorithm algorithm = resolveAlgorithm(algorithmType);</b>
+<b class="fc">&nbsp;        PortfolioOptimisationResult result = algorithm.optimise(request);</b>
+&nbsp;
+<b class="fc">&nbsp;        addSuggestedChanges(result, eligibleHoldings);</b>
+<b class="fc">&nbsp;        addWarningsForExcludedAssets(result, allHoldings, eligibleHoldings, symbols);</b>
+&nbsp;
+<b class="fc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateInputs(
+&nbsp;            UUID userId,
+&nbsp;            LocalDate from,
+&nbsp;            LocalDate to,
+&nbsp;            PortfolioAlgorithm algorithmType) {
+&nbsp;
+<b class="fc">&nbsp;        if (userId == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;User ID must not be null.&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (from == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;From date must not be null.&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (to == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;To date must not be null.&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (from.isAfter(to)) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;From date must be on or before to date.&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (algorithmType == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Portfolio algorithm must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;HoldingResponse&gt; filterEligibleHoldings(List&lt;HoldingResponse&gt; holdings) {
+<b class="fc">&nbsp;        List&lt;HoldingResponse&gt; eligible = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (HoldingResponse holding : holdings) {</b>
+<b class="pc">&nbsp;            if (holding == null) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            String symbol = normaliseSymbol(holding.getSymbol());</b>
+<b class="pc">&nbsp;            if (symbol.isBlank()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            if (holding.isManualValuationRequired()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            if (!holding.isPriceDataSupported()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            if (!holding.isOptimisationSupported()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+&nbsp;            // Changed to fix bug 13 May 2026
+<b class="pc">&nbsp;            if (optimisationValue(holding).compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            eligible.add(holding);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return eligible;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Changed to fix bug 13 May 2026
+&nbsp;    private Map&lt;String, BigDecimal&gt; calculateCurrentWeights(List&lt;HoldingResponse&gt; holdings) {
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; weights = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal totalPortfolioValue = holdings.stream()</b>
+<b class="fc">&nbsp;                .map(this::optimisationValue)</b>
+<b class="fc">&nbsp;                .reduce(BigDecimal.ZERO, BigDecimal::add);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (totalPortfolioValue.compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Total portfolio value must be positive.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        for (HoldingResponse holding : holdings) {</b>
+<b class="fc">&nbsp;            String symbol = normaliseSymbol(holding.getSymbol());</b>
+<b class="fc">&nbsp;            BigDecimal value = optimisationValue(holding);</b>
+<b class="fc">&nbsp;            BigDecimal weight = value.divide(totalPortfolioValue, MC);</b>
+<b class="fc">&nbsp;            weights.put(symbol, weight);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return weights;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;String, List&lt;BigDecimal&gt;&gt; buildDailyReturns(
+&nbsp;            UUID userId,
+&nbsp;            List&lt;HoldingResponse&gt; holdings,
+&nbsp;            LocalDate from,
+&nbsp;            LocalDate to) {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, List&lt;BigDecimal&gt;&gt; rawReturns = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (HoldingResponse holding : holdings) {</b>
+<b class="fc">&nbsp;            String symbol = normaliseSymbol(holding.getSymbol());</b>
+&nbsp;
+&nbsp;            List&lt;HistoricalPricePoint&gt; prices;
+&nbsp;            try {
+<b class="fc">&nbsp;                prices = marketDataProvider.getHistoricalPrices(symbol, from, to);</b>
+<b class="pc">&nbsp;                System.out.println(symbol + &quot; historical prices fetched: &quot; + (prices == null ? 0 : prices.size()));</b>
+&nbsp;            } catch (Exception ex) {
+<b class="fc">&nbsp;                System.out.println(symbol + &quot; historical price fetch failed: &quot; + ex.getMessage());</b>
+<b class="fc">&nbsp;                assetProfileService.markHistoricalUnsupported(userId, symbol);</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            List&lt;BigDecimal&gt; returns = toDailyReturns(prices);</b>
+&nbsp;
+<b class="fc">&nbsp;            if (!returns.isEmpty()) {</b>
+<b class="fc">&nbsp;                rawReturns.put(symbol, returns);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return alignReturnSeries(rawReturns);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;BigDecimal&gt; toDailyReturns(List&lt;HistoricalPricePoint&gt; prices) {
+<b class="fc">&nbsp;        List&lt;BigDecimal&gt; returns = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (prices == null || prices.size() &lt; 2) {</b>
+<b class="fc">&nbsp;            return returns;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        prices.sort((left, right) -&gt; left.getDate().compareTo(right.getDate()));</b>
+&nbsp;
+<b class="fc">&nbsp;        for (int i = 1; i &lt; prices.size(); i++) {</b>
+<b class="fc">&nbsp;            BigDecimal previous = prices.get(i - 1).getClose();</b>
+<b class="fc">&nbsp;            BigDecimal current = prices.get(i).getClose();</b>
+&nbsp;
+<b class="pc">&nbsp;            if (previous == null || current == null || previous.compareTo(BigDecimal.ZERO) == 0) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            BigDecimal dailyReturn = current.subtract(previous, MC).divide(previous, MC);</b>
+<b class="fc">&nbsp;            returns.add(dailyReturn);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return returns;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;String, List&lt;BigDecimal&gt;&gt; alignReturnSeries(Map&lt;String, List&lt;BigDecimal&gt;&gt; rawReturns) {
+<b class="fc">&nbsp;        int minSize = rawReturns.values().stream()</b>
+<b class="fc">&nbsp;                .mapToInt(List::size)</b>
+<b class="fc">&nbsp;                .min()</b>
+<b class="fc">&nbsp;                .orElse(0);</b>
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, List&lt;BigDecimal&gt;&gt; aligned = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (minSize &lt;= 0) {</b>
+<b class="nc">&nbsp;            return aligned;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        for (Map.Entry&lt;String, List&lt;BigDecimal&gt;&gt; entry : rawReturns.entrySet()) {</b>
+<b class="fc">&nbsp;            List&lt;BigDecimal&gt; values = entry.getValue();</b>
+&nbsp;
+<b class="pc">&nbsp;            if (values.size() &gt;= minSize) {</b>
+<b class="fc">&nbsp;                aligned.put(entry.getKey(), values.subList(values.size() - minSize, values.size()));</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return aligned;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;String, BigDecimal&gt; retainMatchingWeights(
+&nbsp;            Map&lt;String, BigDecimal&gt; currentWeights,
+&nbsp;            List&lt;String&gt; symbols) {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; filtered = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (String symbol : symbols) {</b>
+<b class="fc">&nbsp;            filtered.put(symbol, currentWeights.getOrDefault(symbol, BigDecimal.ZERO));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return filtered;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private PortfolioConstraintSet defaultConstraints() {
+<b class="fc">&nbsp;        PortfolioConstraintSet constraints = new PortfolioConstraintSet();</b>
+<b class="fc">&nbsp;        constraints.setLongOnly(true);</b>
+<b class="fc">&nbsp;        constraints.setMinWeightPerAsset(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;        constraints.setMaxWeightPerAsset(new BigDecimal(&quot;0.60&quot;));</b>
+<b class="fc">&nbsp;        return constraints;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private PortfolioOptimisationAlgorithm resolveAlgorithm(PortfolioAlgorithm algorithmType) {
+<b class="fc">&nbsp;        return algorithms.stream()</b>
+<b class="fc">&nbsp;                .filter(algorithm -&gt; algorithm.getAlgorithmType() == algorithmType)</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Unsupported algorithm: &quot; + algorithmType));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void addWarningsForExcludedAssets(
+&nbsp;            PortfolioOptimisationResult result,
+&nbsp;            List&lt;HoldingResponse&gt; allHoldings,
+&nbsp;            List&lt;HoldingResponse&gt; eligibleHoldings,
+&nbsp;            List&lt;String&gt; finalSymbols) {
+&nbsp;
+<b class="fc">&nbsp;        List&lt;String&gt; eligibleSymbols = eligibleHoldings.stream()</b>
+<b class="fc">&nbsp;                .map(HoldingResponse::getSymbol)</b>
+<b class="fc">&nbsp;                .map(this::normaliseSymbol)</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (HoldingResponse holding : allHoldings) {</b>
+<b class="fc">&nbsp;            String symbol = normaliseSymbol(holding.getSymbol());</b>
+&nbsp;
+<b class="pc">&nbsp;            if (symbol.isBlank()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            if (!eligibleSymbols.contains(symbol)) {</b>
+<b class="fc">&nbsp;                result.getWarnings().add(symbol + &quot; was excluded because it is not eligible for optimisation.&quot;);</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            if (!finalSymbols.contains(symbol)) {</b>
+<b class="fc">&nbsp;                result.getWarnings().add(symbol + &quot; was excluded because sufficient historical data was not available.&quot;);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String normaliseSymbol(String symbol) {
+<b class="pc">&nbsp;        return symbol == null ? &quot;&quot; : symbol.trim().toUpperCase();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void addSuggestedChanges(
+&nbsp;            PortfolioOptimisationResult result,
+&nbsp;            List&lt;HoldingResponse&gt; eligibleHoldings) {
+&nbsp;
+<b class="pc">&nbsp;        if (result == null || result.getAssets() == null || result.getAssets().isEmpty()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, HoldingResponse&gt; holdingsBySymbol = eligibleHoldings.stream()</b>
+<b class="fc">&nbsp;                .collect(Collectors.toMap(</b>
+<b class="fc">&nbsp;                        holding -&gt; normaliseSymbol(holding.getSymbol()),</b>
+<b class="fc">&nbsp;                        holding -&gt; holding,</b>
+<b class="nc">&nbsp;                        (left, right) -&gt; left,</b>
+&nbsp;                        LinkedHashMap::new
+&nbsp;                ));
+&nbsp;
+&nbsp;        // Changed to fix bug 13 May 2026
+<b class="fc">&nbsp;        BigDecimal totalPortfolioValue = eligibleHoldings.stream()</b>
+<b class="fc">&nbsp;                .map(this::optimisationValue)</b>
+<b class="fc">&nbsp;                .reduce(BigDecimal.ZERO, BigDecimal::add);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (totalPortfolioValue.compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        for (PortfolioOptimisationAssetResult asset : result.getAssets()) {</b>
+<b class="fc">&nbsp;            String symbol = normaliseSymbol(asset.getSymbol());</b>
+<b class="fc">&nbsp;            HoldingResponse holding = holdingsBySymbol.get(symbol);</b>
+&nbsp;
+<b class="pc">&nbsp;            if (holding == null) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            BigDecimal currentValue = optimisationValue(holding);</b>
+<b class="fc">&nbsp;            BigDecimal unitPriceForSuggestion = suggestedUnitPrice(holding);</b>
+<b class="fc">&nbsp;            BigDecimal targetWeight = nvl(asset.getTargetWeight());</b>
+&nbsp;
+<b class="fc">&nbsp;            BigDecimal targetValue = totalPortfolioValue.multiply(targetWeight, MC);</b>
+<b class="fc">&nbsp;            BigDecimal valueDifference = targetValue.subtract(currentValue, MC);</b>
+&nbsp;
+<b class="fc">&nbsp;            BigDecimal suggestedUnitChange = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;            if (unitPriceForSuggestion.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="fc">&nbsp;                suggestedUnitChange = valueDifference.divide(unitPriceForSuggestion, MC);</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            asset.setCurrentValue(currentValue);</b>
+<b class="fc">&nbsp;            asset.setTargetValue(targetValue);</b>
+<b class="fc">&nbsp;            asset.setValueDifference(valueDifference);</b>
+<b class="fc">&nbsp;            asset.setLatestPrice(unitPriceForSuggestion);</b>
+<b class="fc">&nbsp;            asset.setSuggestedUnitChange(suggestedUnitChange);</b>
+<b class="fc">&nbsp;            asset.setSuggestedAction(toSuggestedAction(valueDifference));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    //null safety helper
+&nbsp;    private BigDecimal nvl(BigDecimal value) {
+<b class="pc">&nbsp;        return value == null ? BigDecimal.ZERO : value;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String toSuggestedAction(BigDecimal valueDifference) {
+<b class="pc">&nbsp;        if (valueDifference == null) {</b>
+<b class="nc">&nbsp;            return &quot;HOLD&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        int comparison = valueDifference.compareTo(BigDecimal.ZERO);</b>
+&nbsp;
+<b class="fc">&nbsp;        if (comparison &gt; 0) {</b>
+<b class="fc">&nbsp;            return &quot;BUY&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (comparison &lt; 0) {</b>
+<b class="fc">&nbsp;            return &quot;REDUCE&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return &quot;HOLD&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal optimisationValue(HoldingResponse holding) {
+<b class="pc">&nbsp;        if (holding == null) {</b>
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal marketValue = holding.getMarketValue();</b>
+<b class="pc">&nbsp;        if (marketValue != null &amp;&amp; marketValue.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="fc">&nbsp;            return marketValue;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal totalCost = holding.getTotalCost();</b>
+<b class="pc">&nbsp;        if (totalCost != null &amp;&amp; totalCost.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="fc">&nbsp;            return totalCost;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return BigDecimal.ZERO;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal suggestedUnitPrice(HoldingResponse holding) {
+<b class="pc">&nbsp;        if (holding == null) {</b>
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal latestPrice = holding.getLatestPrice();</b>
+<b class="pc">&nbsp;        if (latestPrice != null &amp;&amp; latestPrice.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="fc">&nbsp;            return latestPrice;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal averageCost = holding.getAverageCost();</b>
+<b class="pc">&nbsp;        if (averageCost != null &amp;&amp; averageCost.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="nc">&nbsp;            return averageCost;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return BigDecimal.ZERO;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

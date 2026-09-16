@@ -1,0 +1,77 @@
+@startuml
+title Figure 4.5 Portfolio Services Design
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Portfolio Controllers" {
+  component "PortfolioActivityController" as ActivityController
+  component "PortfolioHoldingController" as HoldingController
+  component "PortfolioAllocationController" as AllocationController
+  component "PortfolioAnalysisController" as AnalysisController
+  component "PortfolioOverviewController" as OverviewController
+}
+
+package "Portfolio Services" {
+  component "ActivityService\nCreates and manages activities" as ActivityService
+  component "HoldingService\nDerives holdings from activities" as HoldingService
+  component "AllocationService\nGroups portfolio allocation" as AllocationService
+  component "BenchmarkService\nCompares portfolio with benchmark" as BenchmarkService
+  component "PortfolioOptimisationService\nCoordinates optimisation" as OptimisationService
+  component "OverviewService\nBuilds overview dashboard data" as OverviewService
+  component "AssetProfileService\nManages asset metadata" as AssetProfileService
+  component "AssetMetadataSyncService\nSyncs metadata from provider" as MetadataSyncService
+  component "MarketDataService\nProvides quotes and history" as MarketDataService
+}
+
+package "Portfolio Optimisation Module" {
+  interface "PortfolioOptimisationAlgorithm" as Algorithm
+  component "MeanVarianceOptimisationAlgorithm" as MVO
+  component "PortfolioStatisticsCalculator" as Stats
+  component "RebalanceSuggestionCalculator" as Rebalance
+}
+
+package "Repositories" {
+  database "ActivityRepository" as ActivityRepo
+  database "AssetProfileRepository" as AssetRepo
+}
+
+cloud "Alpha Vantage API" as Alpha
+
+ActivityController --> ActivityService
+HoldingController --> HoldingService
+AllocationController --> AllocationService
+AnalysisController --> BenchmarkService
+AnalysisController --> OptimisationService
+OverviewController --> OverviewService
+
+ActivityService --> ActivityRepo
+
+HoldingService --> ActivityRepo : read activities
+HoldingService --> AssetRepo : read asset metadata
+HoldingService --> MarketDataService : latest prices
+
+AllocationService --> HoldingService : derived holdings
+
+BenchmarkService --> HoldingService : portfolio value series
+BenchmarkService --> MarketDataService : benchmark history
+
+OptimisationService --> HoldingService : eligible holdings
+OptimisationService --> MarketDataService : historical prices
+OptimisationService --> Algorithm : calculate optimisation
+
+Algorithm <|.. MVO
+MVO --> Stats : return / volatility / Sharpe
+MVO --> Rebalance : suggested allocation changes
+
+OverviewService --> HoldingService
+OverviewService --> AllocationService
+
+AssetProfileService --> AssetRepo
+MetadataSyncService --> AssetRepo
+MetadataSyncService --> MarketDataService
+
+MarketDataService --> Alpha : via market-data integration layer
+
+@enduml

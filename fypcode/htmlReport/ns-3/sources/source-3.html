@@ -1,0 +1,163 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AuthPageController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: AuthPageController (com.tsh11.fypcode.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AuthPageController</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/11)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.controller;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.dto.request.RegisterUserRequest;
+&nbsp;import com.tsh11.fypcode.service.UserService;
+&nbsp;import jakarta.validation.Valid;
+&nbsp;import org.springframework.stereotype.Controller;
+&nbsp;import org.springframework.ui.Model;
+&nbsp;import org.springframework.validation.BindingResult;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;@Controller
+&nbsp;public class AuthPageController {
+&nbsp;
+&nbsp;    private final UserService userService;
+&nbsp;
+<b class="nc">&nbsp;    public AuthPageController(UserService userService) {</b>
+<b class="nc">&nbsp;        this.userService = userService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/login&quot;)
+&nbsp;    public String loginPage() {
+<b class="nc">&nbsp;        return &quot;auth/login&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/register&quot;)
+&nbsp;    public String registerPage(Model model) {
+<b class="nc">&nbsp;        model.addAttribute(&quot;registerUserRequest&quot;, new RegisterUserRequest());</b>
+<b class="nc">&nbsp;        return &quot;auth/register&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/register&quot;)
+&nbsp;    public String register(@Valid @ModelAttribute RegisterUserRequest registerUserRequest,
+&nbsp;                           BindingResult bindingResult) {
+<b class="nc">&nbsp;        if (bindingResult.hasErrors()) {</b>
+<b class="nc">&nbsp;            return &quot;auth/register&quot;;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            userService.register(registerUserRequest);</b>
+&nbsp;        } catch (IllegalArgumentException ex) {
+<b class="nc">&nbsp;            bindingResult.rejectValue(&quot;email&quot;, &quot;email.exists&quot;, ex.getMessage());</b>
+<b class="nc">&nbsp;            return &quot;auth/register&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return &quot;redirect:/login?registered&quot;;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

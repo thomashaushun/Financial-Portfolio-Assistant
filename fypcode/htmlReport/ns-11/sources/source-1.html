@@ -1,0 +1,519 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MeanVarianceOptimisationAlgorithm</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.portfolio</a>
+</div>
+
+<h1>Coverage Summary for Class: MeanVarianceOptimisationAlgorithm (com.tsh11.fypcode.service.portfolio)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">MeanVarianceOptimisationAlgorithm</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95%
+  </span>
+  <span class="absValue">
+    (19/20)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    75.8%
+  </span>
+  <span class="absValue">
+    (47/62)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    97.5%
+  </span>
+  <span class="absValue">
+    (157/161)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.portfolio;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.dto.EfficientFrontierPointDto;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioAlgorithm;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioMetricsDto;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationAssetResult;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationRequest;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationResult;
+&nbsp;import org.apache.commons.math3.linear.RealMatrix;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.math.MathContext;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.Comparator;
+&nbsp;import java.util.LinkedHashMap;
+&nbsp;import java.util.LinkedHashSet;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@Component
+&nbsp;public class MeanVarianceOptimisationAlgorithm implements PortfolioOptimisationAlgorithm {
+&nbsp;
+<b class="fc">&nbsp;    private static final MathContext MC = MathContext.DECIMAL64;</b>
+<b class="fc">&nbsp;    private static final BigDecimal ONE = BigDecimal.ONE;</b>
+<b class="fc">&nbsp;    private static final BigDecimal ZERO = BigDecimal.ZERO;</b>
+&nbsp;
+&nbsp;    /**
+&nbsp;     * 5% is a good first-pass search granularity.
+&nbsp;     * You can later tighten this to 0.02 or 0.01 for finer search.
+&nbsp;     */
+<b class="fc">&nbsp;    private static final BigDecimal DEFAULT_WEIGHT_STEP = new BigDecimal(&quot;0.05&quot;);</b>
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Avoid duplicate frontier points that are effectively the same risk level.
+&nbsp;     */
+<b class="fc">&nbsp;    private static final BigDecimal FRONTIER_VOL_BUCKET = new BigDecimal(&quot;0.005&quot;);</b>
+&nbsp;
+&nbsp;    private final PortfolioStatisticsCalculator statisticsCalculator;
+&nbsp;    private final RebalanceSuggestionCalculator rebalanceSuggestionCalculator;
+&nbsp;
+&nbsp;    public MeanVarianceOptimisationAlgorithm(
+&nbsp;            PortfolioStatisticsCalculator statisticsCalculator,
+<b class="fc">&nbsp;            RebalanceSuggestionCalculator rebalanceSuggestionCalculator) {</b>
+<b class="fc">&nbsp;        this.statisticsCalculator = statisticsCalculator;</b>
+<b class="fc">&nbsp;        this.rebalanceSuggestionCalculator = rebalanceSuggestionCalculator;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public PortfolioAlgorithm getAlgorithmType() {
+<b class="fc">&nbsp;        return PortfolioAlgorithm.MEAN_VARIANCE;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public PortfolioOptimisationResult optimise(PortfolioOptimisationRequest request) {
+<b class="fc">&nbsp;        validateRequest(request);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;String&gt; symbols = request.getSymbols();</b>
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; currentWeights = request.getCurrentWeights();</b>
+<b class="fc">&nbsp;        Map&lt;String, List&lt;BigDecimal&gt;&gt; dailyReturns = request.getDailyReturns();</b>
+<b class="fc">&nbsp;        BigDecimal riskFreeRate = request.getRiskFreeRate();</b>
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; expectedDailyReturns =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateExpectedDailyReturns(symbols, dailyReturns);</b>
+&nbsp;
+<b class="fc">&nbsp;        RealMatrix covarianceMatrix =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateCovarianceMatrix(symbols, dailyReturns);</b>
+&nbsp;
+<b class="fc">&nbsp;        PortfolioCandidate currentCandidate =</b>
+<b class="fc">&nbsp;                evaluateCandidate(symbols, currentWeights, expectedDailyReturns, covarianceMatrix, riskFreeRate);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PortfolioCandidate&gt; feasibleCandidates =</b>
+<b class="fc">&nbsp;                computeFeasibleCandidates(symbols, expectedDailyReturns, covarianceMatrix, request);</b>
+&nbsp;
+<b class="fc">&nbsp;        PortfolioCandidate optimalCandidate =</b>
+<b class="fc">&nbsp;                selectBestSharpeCandidate(feasibleCandidates, currentCandidate);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;EfficientFrontierPointDto&gt; efficientFrontier =</b>
+<b class="fc">&nbsp;                computeEfficientFrontier(feasibleCandidates);</b>
+&nbsp;
+<b class="fc">&nbsp;        PortfolioOptimisationResult result = new PortfolioOptimisationResult();</b>
+<b class="fc">&nbsp;        result.setAlgorithm(getAlgorithmType());</b>
+<b class="fc">&nbsp;        result.setCurrentPortfolio(toMetricsDto(currentCandidate));</b>
+<b class="fc">&nbsp;        result.setOptimisedPortfolio(toMetricsDto(optimalCandidate));</b>
+<b class="fc">&nbsp;        result.setAssets(toAssetResults(symbols, currentWeights, optimalCandidate.getWeights()));</b>
+<b class="fc">&nbsp;        result.setEfficientFrontier(efficientFrontier);</b>
+<b class="fc">&nbsp;        result.setSuggestions(</b>
+<b class="fc">&nbsp;                rebalanceSuggestionCalculator.calculateSuggestions(currentWeights, optimalCandidate.getWeights())</b>
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateRequest(PortfolioOptimisationRequest request) {
+<b class="fc">&nbsp;        if (request == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Portfolio optimisation request must not be null.&quot;);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (request.getSymbols() == null || request.getSymbols().isEmpty()) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;At least one asset is required.&quot;);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (request.getCurrentWeights() == null || request.getCurrentWeights().isEmpty()) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Current weights are required.&quot;);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (request.getDailyReturns() == null || request.getDailyReturns().isEmpty()) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Historical return series are required.&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (request.getConstraints() == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Portfolio constraints are required.&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private PortfolioCandidate evaluateCandidate(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, BigDecimal&gt; weights,
+&nbsp;            Map&lt;String, BigDecimal&gt; expectedDailyReturns,
+&nbsp;            RealMatrix covarianceMatrix,
+&nbsp;            BigDecimal riskFreeRate) {
+&nbsp;
+<b class="fc">&nbsp;        PortfolioCandidate candidate = new PortfolioCandidate();</b>
+<b class="fc">&nbsp;        candidate.setWeights(new LinkedHashMap&lt;&gt;(weights));</b>
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal annualReturn =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateAnnualisedReturn(weights, expectedDailyReturns);</b>
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal annualVolatility =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateAnnualisedVolatility(weights, covarianceMatrix, symbols);</b>
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal sharpeRatio =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateSharpeRatio(annualReturn, annualVolatility, riskFreeRate);</b>
+&nbsp;
+<b class="fc">&nbsp;        candidate.setExpectedAnnualReturn(annualReturn);</b>
+<b class="fc">&nbsp;        candidate.setAnnualVolatility(annualVolatility);</b>
+<b class="fc">&nbsp;        candidate.setSharpeRatio(sharpeRatio);</b>
+&nbsp;
+<b class="fc">&nbsp;        return candidate;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;PortfolioCandidate&gt; computeFeasibleCandidates(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, BigDecimal&gt; expectedDailyReturns,
+&nbsp;            RealMatrix covarianceMatrix,
+&nbsp;            PortfolioOptimisationRequest request) {
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal step = DEFAULT_WEIGHT_STEP;</b>
+<b class="fc">&nbsp;        PortfolioConstraintSet constraints = request.getConstraints();</b>
+<b class="fc">&nbsp;        BigDecimal riskFreeRate = request.getRiskFreeRate();</b>
+&nbsp;
+<b class="fc">&nbsp;        int totalUnits = toUnits(ONE, step);</b>
+<b class="fc">&nbsp;        int minUnits = toUnits(</b>
+<b class="pc">&nbsp;                constraints.getMinWeightPerAsset() == null ? ZERO : constraints.getMinWeightPerAsset(),</b>
+&nbsp;                step
+&nbsp;        );
+<b class="fc">&nbsp;        int maxUnits = toUnits(</b>
+<b class="pc">&nbsp;                constraints.getMaxWeightPerAsset() == null ? ONE : constraints.getMaxWeightPerAsset(),</b>
+&nbsp;                step
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PortfolioCandidate&gt; candidates = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        int[] units = new int[symbols.size()];</b>
+&nbsp;
+<b class="fc">&nbsp;        searchWeightsRecursively(</b>
+&nbsp;                0,
+&nbsp;                totalUnits,
+&nbsp;                symbols,
+&nbsp;                units,
+&nbsp;                minUnits,
+&nbsp;                maxUnits,
+&nbsp;                step,
+&nbsp;                expectedDailyReturns,
+&nbsp;                covarianceMatrix,
+&nbsp;                riskFreeRate,
+&nbsp;                candidates
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        return candidates;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void searchWeightsRecursively(
+&nbsp;            int assetIndex,
+&nbsp;            int remainingUnits,
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            int[] units,
+&nbsp;            int minUnits,
+&nbsp;            int maxUnits,
+&nbsp;            BigDecimal step,
+&nbsp;            Map&lt;String, BigDecimal&gt; expectedDailyReturns,
+&nbsp;            RealMatrix covarianceMatrix,
+&nbsp;            BigDecimal riskFreeRate,
+&nbsp;            List&lt;PortfolioCandidate&gt; candidates) {
+&nbsp;
+<b class="fc">&nbsp;        int assetCount = symbols.size();</b>
+&nbsp;
+<b class="fc">&nbsp;        if (assetIndex == assetCount - 1) {</b>
+<b class="fc">&nbsp;            int lastUnits = remainingUnits;</b>
+&nbsp;
+<b class="pc">&nbsp;            if (lastUnits &lt; minUnits || lastUnits &gt; maxUnits) {</b>
+&nbsp;                return;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            units[assetIndex] = lastUnits;</b>
+&nbsp;
+<b class="fc">&nbsp;            Map&lt;String, BigDecimal&gt; weights = toWeightMap(symbols, units, step);</b>
+<b class="pc">&nbsp;            if (!isWeightSumValid(weights)) {</b>
+&nbsp;                return;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            PortfolioCandidate candidate = evaluateCandidate(</b>
+&nbsp;                    symbols,
+&nbsp;                    weights,
+&nbsp;                    expectedDailyReturns,
+&nbsp;                    covarianceMatrix,
+&nbsp;                    riskFreeRate
+&nbsp;            );
+&nbsp;
+<b class="fc">&nbsp;            candidates.add(candidate);</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        int remainingAssetsAfterCurrent = assetCount - assetIndex - 1;</b>
+&nbsp;
+<b class="fc">&nbsp;        int lowerBound = Math.max(</b>
+&nbsp;                minUnits,
+&nbsp;                remainingUnits - remainingAssetsAfterCurrent * maxUnits
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        int upperBound = Math.min(</b>
+&nbsp;                maxUnits,
+&nbsp;                remainingUnits - remainingAssetsAfterCurrent * minUnits
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        for (int currentUnits = lowerBound; currentUnits &lt;= upperBound; currentUnits++) {</b>
+<b class="fc">&nbsp;            units[assetIndex] = currentUnits;</b>
+&nbsp;
+<b class="fc">&nbsp;            searchWeightsRecursively(</b>
+&nbsp;                    assetIndex + 1,
+&nbsp;                    remainingUnits - currentUnits,
+&nbsp;                    symbols,
+&nbsp;                    units,
+&nbsp;                    minUnits,
+&nbsp;                    maxUnits,
+&nbsp;                    step,
+&nbsp;                    expectedDailyReturns,
+&nbsp;                    covarianceMatrix,
+&nbsp;                    riskFreeRate,
+&nbsp;                    candidates
+&nbsp;            );
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private PortfolioCandidate selectBestSharpeCandidate(
+&nbsp;            List&lt;PortfolioCandidate&gt; candidates,
+&nbsp;            PortfolioCandidate fallbackCandidate) {
+&nbsp;
+<b class="pc">&nbsp;        if (candidates == null || candidates.isEmpty()) {</b>
+<b class="fc">&nbsp;            return fallbackCandidate;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return candidates.stream()</b>
+<b class="fc">&nbsp;                .max(Comparator.comparing(PortfolioCandidate::getSharpeRatio))</b>
+<b class="fc">&nbsp;                .orElse(fallbackCandidate);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;EfficientFrontierPointDto&gt; computeEfficientFrontier(List&lt;PortfolioCandidate&gt; candidates) {
+<b class="pc">&nbsp;        if (candidates == null || candidates.isEmpty()) {</b>
+<b class="fc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PortfolioCandidate&gt; sortedByRisk = candidates.stream()</b>
+<b class="fc">&nbsp;                .sorted(Comparator.comparing(PortfolioCandidate::getAnnualVolatility)</b>
+<b class="fc">&nbsp;                        .thenComparing(PortfolioCandidate::getExpectedAnnualReturn))</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PortfolioCandidate&gt; frontierCandidates = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        BigDecimal bestReturnSoFar = null;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (PortfolioCandidate candidate : sortedByRisk) {</b>
+<b class="fc">&nbsp;            BigDecimal risk = safe(candidate.getAnnualVolatility());</b>
+<b class="fc">&nbsp;            BigDecimal expectedReturn = safe(candidate.getExpectedAnnualReturn());</b>
+&nbsp;
+<b class="fc">&nbsp;            if (bestReturnSoFar == null || expectedReturn.compareTo(bestReturnSoFar) &gt; 0) {</b>
+<b class="fc">&nbsp;                frontierCandidates.add(candidate);</b>
+<b class="fc">&nbsp;                bestReturnSoFar = expectedReturn;</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PortfolioCandidate&gt; deduplicated = deduplicateFrontierCandidates(frontierCandidates);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;EfficientFrontierPointDto&gt; frontier = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (PortfolioCandidate candidate : deduplicated) {</b>
+<b class="fc">&nbsp;            EfficientFrontierPointDto point = new EfficientFrontierPointDto();</b>
+<b class="fc">&nbsp;            point.setExpectedAnnualReturn(candidate.getExpectedAnnualReturn());</b>
+<b class="fc">&nbsp;            point.setAnnualVolatility(candidate.getAnnualVolatility());</b>
+<b class="fc">&nbsp;            point.setSharpeRatio(candidate.getSharpeRatio());</b>
+<b class="fc">&nbsp;            point.setWeights(new LinkedHashMap&lt;&gt;(candidate.getWeights()));</b>
+<b class="fc">&nbsp;            frontier.add(point);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return frontier;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;String, BigDecimal&gt; toWeightMap(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            int[] units,
+&nbsp;            BigDecimal step) {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; weights = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (int i = 0; i &lt; symbols.size(); i++) {</b>
+<b class="fc">&nbsp;            BigDecimal weight = BigDecimal.valueOf(units[i]).multiply(step, MC);</b>
+<b class="fc">&nbsp;            weights.put(symbols.get(i), weight);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return weights;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean isWeightSumValid(Map&lt;String, BigDecimal&gt; weights) {
+<b class="fc">&nbsp;        BigDecimal sum = ZERO;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (BigDecimal weight : weights.values()) {</b>
+<b class="fc">&nbsp;            sum = sum.add(weight, MC);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        return sum.subtract(ONE, MC).abs().compareTo(new BigDecimal(&quot;0.0000001&quot;)) &lt;= 0;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private int toUnits(BigDecimal weight, BigDecimal step) {
+<b class="fc">&nbsp;        return weight.divide(step, 0, BigDecimal.ROUND_HALF_UP).intValueExact();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String volatilityBucket(BigDecimal volatility) {
+<b class="nc">&nbsp;        BigDecimal safeVolatility = volatility == null ? ZERO : volatility;</b>
+<b class="nc">&nbsp;        BigDecimal bucket = safeVolatility.divide(FRONTIER_VOL_BUCKET, 0, BigDecimal.ROUND_HALF_UP)</b>
+<b class="nc">&nbsp;                .multiply(FRONTIER_VOL_BUCKET);</b>
+<b class="nc">&nbsp;        return bucket.toPlainString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private PortfolioMetricsDto toMetricsDto(PortfolioCandidate candidate) {
+<b class="fc">&nbsp;        PortfolioMetricsDto dto = new PortfolioMetricsDto();</b>
+<b class="fc">&nbsp;        dto.setExpectedAnnualReturn(candidate.getExpectedAnnualReturn());</b>
+<b class="fc">&nbsp;        dto.setAnnualVolatility(candidate.getAnnualVolatility());</b>
+<b class="fc">&nbsp;        dto.setSharpeRatio(candidate.getSharpeRatio());</b>
+<b class="fc">&nbsp;        return dto;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;PortfolioOptimisationAssetResult&gt; toAssetResults(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, BigDecimal&gt; currentWeights,
+&nbsp;            Map&lt;String, BigDecimal&gt; targetWeights) {
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PortfolioOptimisationAssetResult&gt; results = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (String symbol : symbols) {</b>
+<b class="fc">&nbsp;            BigDecimal current = currentWeights.getOrDefault(symbol, ZERO);</b>
+<b class="fc">&nbsp;            BigDecimal target = targetWeights.getOrDefault(symbol, ZERO);</b>
+&nbsp;
+<b class="fc">&nbsp;            PortfolioOptimisationAssetResult item = new PortfolioOptimisationAssetResult();</b>
+<b class="fc">&nbsp;            item.setSymbol(symbol);</b>
+<b class="fc">&nbsp;            item.setCurrentWeight(current);</b>
+<b class="fc">&nbsp;            item.setTargetWeight(target);</b>
+<b class="fc">&nbsp;            item.setWeightDifference(target.subtract(current, MC));</b>
+&nbsp;
+<b class="fc">&nbsp;            results.add(item);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return results;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;PortfolioCandidate&gt; deduplicateFrontierCandidates(List&lt;PortfolioCandidate&gt; candidates) {
+<b class="fc">&nbsp;        List&lt;PortfolioCandidate&gt; deduplicated = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        LinkedHashSet&lt;String&gt; seenSignatures = new LinkedHashSet&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (PortfolioCandidate candidate : candidates) {</b>
+<b class="fc">&nbsp;            String signature = candidateWeightSignature(candidate);</b>
+&nbsp;
+<b class="pc">&nbsp;            if (seenSignatures.contains(signature)) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            seenSignatures.add(signature);</b>
+<b class="fc">&nbsp;            deduplicated.add(candidate);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return deduplicated;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String candidateWeightSignature(PortfolioCandidate candidate) {
+<b class="fc">&nbsp;        StringBuilder builder = new StringBuilder();</b>
+&nbsp;
+<b class="fc">&nbsp;        candidate.getWeights().entrySet().stream()</b>
+<b class="fc">&nbsp;                .sorted(Map.Entry.comparingByKey())</b>
+<b class="fc">&nbsp;                .forEach(entry -&gt; builder</b>
+<b class="fc">&nbsp;                        .append(entry.getKey())</b>
+<b class="fc">&nbsp;                        .append(&#39;=&#39;)</b>
+<b class="fc">&nbsp;                        .append(entry.getValue().stripTrailingZeros().toPlainString())</b>
+<b class="fc">&nbsp;                        .append(&#39;;&#39;));</b>
+&nbsp;
+<b class="fc">&nbsp;        return builder.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal safe(BigDecimal value) {
+<b class="pc">&nbsp;        return value == null ? BigDecimal.ZERO : value;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

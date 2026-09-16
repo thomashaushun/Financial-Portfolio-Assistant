@@ -1,0 +1,235 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > InvestorProfileService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.assistant</a>
+</div>
+
+<h1>Coverage Summary for Class: InvestorProfileService (com.tsh11.fypcode.service.assistant)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">InvestorProfileService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (50/50)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.assistant;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.investor.InvestorProfile;
+&nbsp;import com.tsh11.fypcode.dto.request.InvestorProfileRequest;
+&nbsp;import com.tsh11.fypcode.dto.response.InvestorProfileResponse;
+&nbsp;import com.tsh11.fypcode.repository.InvestorProfileRepository;
+&nbsp;import jakarta.persistence.EntityNotFoundException;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;//Handles creating, updating, retrieving, and converting investor profiles.
+&nbsp;/*
+&nbsp;User submits profile form
+&nbsp;↓
+&nbsp;InvestorProfileService validates/saves profile
+&nbsp;↓
+&nbsp;RiskAssessmentService calculates risk profile
+&nbsp;↓
+&nbsp;InvestorProfileRepository stores the result
+&nbsp;↓
+&nbsp;InvestorProfileResponse is returned
+&nbsp; */
+&nbsp;@Service
+&nbsp;@Transactional
+&nbsp;public class InvestorProfileService {
+&nbsp;
+&nbsp;    private final InvestorProfileRepository investorProfileRepository;
+&nbsp;    private final RiskAssessmentService riskAssessmentService;
+&nbsp;
+&nbsp;    public InvestorProfileService(InvestorProfileRepository investorProfileRepository,
+<b class="fc">&nbsp;                                  RiskAssessmentService riskAssessmentService) {</b>
+<b class="fc">&nbsp;        this.investorProfileRepository = investorProfileRepository;</b>
+<b class="fc">&nbsp;        this.riskAssessmentService = riskAssessmentService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public Optional&lt;InvestorProfileResponse&gt; getForUser(UUID userId) {
+<b class="fc">&nbsp;        validateUserId(userId);</b>
+<b class="fc">&nbsp;        return investorProfileRepository.findByUserId(userId).map(this::toResponse);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public Optional&lt;InvestorProfile&gt; findEntityForUser(UUID userId) {
+<b class="fc">&nbsp;        validateUserId(userId);</b>
+<b class="fc">&nbsp;        return investorProfileRepository.findByUserId(userId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public InvestorProfileResponse createOrUpdate(UUID userId, InvestorProfileRequest request) {
+<b class="fc">&nbsp;        validateUserId(userId);</b>
+<b class="fc">&nbsp;        validateRequest(request);</b>
+&nbsp;
+<b class="fc">&nbsp;        InvestorProfile profile = investorProfileRepository.findByUserId(userId)</b>
+<b class="fc">&nbsp;                .orElseGet(() -&gt; {</b>
+<b class="fc">&nbsp;                    InvestorProfile created = new InvestorProfile();</b>
+<b class="fc">&nbsp;                    created.setUserId(userId);</b>
+<b class="fc">&nbsp;                    return created;</b>
+&nbsp;                });
+&nbsp;
+<b class="fc">&nbsp;        applyRequest(profile, request);</b>
+<b class="fc">&nbsp;        InvestorProfile saved = investorProfileRepository.save(profile);</b>
+<b class="fc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public InvestorProfileResponse update(UUID userId, InvestorProfileRequest request) {
+<b class="fc">&nbsp;        validateUserId(userId);</b>
+<b class="fc">&nbsp;        validateRequest(request);</b>
+&nbsp;
+<b class="fc">&nbsp;        InvestorProfile profile = investorProfileRepository.findByUserId(userId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Investor profile has not been created yet.&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        applyRequest(profile, request);</b>
+<b class="fc">&nbsp;        InvestorProfile saved = investorProfileRepository.save(profile);</b>
+<b class="fc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void applyRequest(InvestorProfile profile, InvestorProfileRequest request) {
+<b class="fc">&nbsp;        int riskScore = riskAssessmentService.calculateRiskScore(request);</b>
+&nbsp;
+<b class="fc">&nbsp;        profile.setAge(request.getAge());</b>
+<b class="fc">&nbsp;        profile.setInvestmentHorizonYears(request.getInvestmentHorizonYears());</b>
+<b class="fc">&nbsp;        profile.setRiskTolerance(request.getRiskTolerance());</b>
+<b class="fc">&nbsp;        profile.setInvestmentExperience(request.getInvestmentExperience());</b>
+<b class="fc">&nbsp;        profile.setIncomeStability(request.getIncomeStability());</b>
+<b class="fc">&nbsp;        profile.setInvestmentGoal(request.getInvestmentGoal());</b>
+<b class="fc">&nbsp;        profile.setRiskScore(riskScore);</b>
+<b class="fc">&nbsp;        profile.setRiskProfileType(riskAssessmentService.classify(riskScore));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private InvestorProfileResponse toResponse(InvestorProfile profile) {
+<b class="fc">&nbsp;        InvestorProfileResponse response = new InvestorProfileResponse();</b>
+<b class="fc">&nbsp;        response.setId(profile.getId());</b>
+<b class="fc">&nbsp;        response.setAge(profile.getAge());</b>
+<b class="fc">&nbsp;        response.setInvestmentHorizonYears(profile.getInvestmentHorizonYears());</b>
+<b class="fc">&nbsp;        response.setRiskTolerance(profile.getRiskTolerance());</b>
+<b class="fc">&nbsp;        response.setInvestmentExperience(profile.getInvestmentExperience());</b>
+<b class="fc">&nbsp;        response.setIncomeStability(profile.getIncomeStability());</b>
+<b class="fc">&nbsp;        response.setInvestmentGoal(profile.getInvestmentGoal());</b>
+<b class="fc">&nbsp;        response.setRiskScore(profile.getRiskScore());</b>
+<b class="fc">&nbsp;        response.setRiskProfileType(profile.getRiskProfileType());</b>
+<b class="fc">&nbsp;        response.setCreatedAt(profile.getCreatedAt());</b>
+<b class="fc">&nbsp;        response.setUpdatedAt(profile.getUpdatedAt());</b>
+<b class="fc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateUserId(UUID userId) {
+<b class="fc">&nbsp;        if (userId == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;User ID must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateRequest(InvestorProfileRequest request) {
+<b class="fc">&nbsp;        if (request == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Investor profile request must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

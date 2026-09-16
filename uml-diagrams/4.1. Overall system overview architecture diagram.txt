@@ -1,0 +1,44 @@
+@startuml
+title Overall System Architecture
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+
+node "User Browser" as Browser {
+  component "Thymeleaf Pages\nBootstrap UI" as UI
+  component "JavaScript / AJAX" as JS
+  component "Chart.js" as Charts
+  component "PDF Export\njsPDF + jspdf-autotable" as PDF
+}
+
+node "Spring Boot Application" as App {
+  component "Web Layer\nPage + REST Controllers" as Web
+  component "Security Layer\nSpring Security" as Security
+  component "Service Layer\nPortfolio + Assistant + Explanation Services" as Services
+  component "Optimisation Module\nMean-Variance Optimisation" as Optimisation
+  component "Integration Layer\nMarket Data + LLM Clients" as Integration
+  component "Repository Layer\nSpring Data Repositories" as Repositories
+}
+
+database "PostgreSQL Database" as DB
+cloud "Alpha Vantage API" as Alpha
+cloud "Gemini API\nGoogle GenAI" as Gemini
+
+Browser --> Web : HTTP page requests\nAJAX/JSON requests
+UI --> JS
+JS --> Charts
+JS --> PDF
+
+Web --> Security
+Web --> Services
+Services --> Optimisation
+Services --> Integration
+Services --> Repositories
+Repositories --> DB
+
+Integration --> Alpha : market data requests
+Integration --> Gemini : explanation requests
+
+@enduml

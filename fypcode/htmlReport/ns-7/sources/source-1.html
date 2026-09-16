@@ -1,0 +1,185 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AppUser</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.domain.user</a>
+</div>
+
+<h1>Coverage Summary for Class: AppUser (com.tsh11.fypcode.domain.user)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AppUser</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/14)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.domain.user;
+&nbsp;
+&nbsp;import jakarta.persistence.*;
+&nbsp;import java.time.Instant;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;@Entity
+&nbsp;@Table(name = &quot;app_users&quot;)
+<b class="nc">&nbsp;public class AppUser {</b>
+&nbsp;
+&nbsp;    @Id
+&nbsp;    @GeneratedValue(strategy = GenerationType.UUID)
+&nbsp;    private UUID id;
+&nbsp;
+&nbsp;    @Column(nullable = false, unique = true, length = 120)
+&nbsp;    private String email;
+&nbsp;
+&nbsp;    @Column(nullable = false, length = 255)
+&nbsp;    private String passwordHash;
+&nbsp;
+&nbsp;    @Column(nullable = false, length = 120)
+&nbsp;    private String displayName;
+&nbsp;
+<b class="nc">&nbsp;    @Column(nullable = false, length = 40)</b>
+&nbsp;    private String role = &quot;ROLE_USER&quot;;
+&nbsp;
+<b class="nc">&nbsp;    @Column(nullable = false)</b>
+<b class="nc">&nbsp;    private Instant createdAt = Instant.now();</b>
+&nbsp;
+&nbsp;    public UUID getId() {
+<b class="nc">&nbsp;        return id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getEmail() {
+<b class="nc">&nbsp;        return email;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setEmail(String email) {
+<b class="nc">&nbsp;        this.email = email == null ? null : email.trim().toLowerCase();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getPasswordHash() {
+<b class="nc">&nbsp;        return passwordHash;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setPasswordHash(String passwordHash) {
+<b class="nc">&nbsp;        this.passwordHash = passwordHash;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getDisplayName() {
+<b class="nc">&nbsp;        return displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setDisplayName(String displayName) {
+<b class="nc">&nbsp;        this.displayName = displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getRole() {
+<b class="nc">&nbsp;        return role;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setRole(String role) {
+<b class="nc">&nbsp;        this.role = role;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Instant getCreatedAt() {
+<b class="nc">&nbsp;        return createdAt;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

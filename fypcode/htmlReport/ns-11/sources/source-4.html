@@ -1,0 +1,248 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PortfolioStatisticsCalculator</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.portfolio</a>
+</div>
+
+<h1>Coverage Summary for Class: PortfolioStatisticsCalculator (com.tsh11.fypcode.service.portfolio)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PortfolioStatisticsCalculator</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    86.8%
+  </span>
+  <span class="absValue">
+    (33/38)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    98%
+  </span>
+  <span class="absValue">
+    (49/50)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.portfolio;
+&nbsp;
+&nbsp;import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+&nbsp;import org.apache.commons.math3.linear.RealMatrix;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.math.MathContext;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@Component
+<b class="fc">&nbsp;public class PortfolioStatisticsCalculator {</b>
+&nbsp;
+<b class="fc">&nbsp;    private static final MathContext MC = MathContext.DECIMAL64;</b>
+<b class="fc">&nbsp;    private static final BigDecimal TRADING_DAYS_PER_YEAR = new BigDecimal(&quot;252&quot;);</b>
+&nbsp;
+&nbsp;    public BigDecimal calculateAnnualisedReturn(
+&nbsp;            Map&lt;String, BigDecimal&gt; weights,
+&nbsp;            Map&lt;String, BigDecimal&gt; expectedDailyReturns) {
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal result = BigDecimal.ZERO;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (Map.Entry&lt;String, BigDecimal&gt; entry : weights.entrySet()) {</b>
+<b class="fc">&nbsp;            BigDecimal weight = entry.getValue();</b>
+<b class="fc">&nbsp;            BigDecimal dailyReturn = expectedDailyReturns.getOrDefault(entry.getKey(), BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            result = result.add(weight.multiply(dailyReturn, MC), MC);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return result.multiply(TRADING_DAYS_PER_YEAR, MC);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal calculateAnnualisedVolatility(
+&nbsp;            Map&lt;String, BigDecimal&gt; weights,
+&nbsp;            RealMatrix covarianceMatrix,
+&nbsp;            List&lt;String&gt; symbols) {
+&nbsp;
+<b class="fc">&nbsp;        double[] weightArray = new double[symbols.size()];</b>
+<b class="fc">&nbsp;        for (int i = 0; i &lt; symbols.size(); i++) {</b>
+<b class="fc">&nbsp;            weightArray[i] = weights.getOrDefault(symbols.get(i), BigDecimal.ZERO).doubleValue();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        RealMatrix w = new Array2DRowRealMatrix(weightArray);</b>
+<b class="fc">&nbsp;        double variance = w.transpose().multiply(covarianceMatrix).multiply(w).getEntry(0, 0);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (variance &lt; 0) {</b>
+<b class="nc">&nbsp;            variance = 0;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        double annualisedVolatility = Math.sqrt(variance) * Math.sqrt(252.0);</b>
+<b class="fc">&nbsp;        return BigDecimal.valueOf(annualisedVolatility);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal calculateSharpeRatio(
+&nbsp;            BigDecimal annualReturn,
+&nbsp;            BigDecimal annualVolatility,
+&nbsp;            BigDecimal riskFreeRate) {
+&nbsp;
+<b class="fc">&nbsp;        if (annualVolatility == null || annualVolatility.compareTo(BigDecimal.ZERO) == 0) {</b>
+<b class="fc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal excessReturn = annualReturn.subtract(</b>
+<b class="fc">&nbsp;                riskFreeRate == null ? BigDecimal.ZERO : riskFreeRate,</b>
+&nbsp;                MC
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        return excessReturn.divide(annualVolatility, MC);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public RealMatrix calculateCovarianceMatrix(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, List&lt;BigDecimal&gt;&gt; dailyReturns) {
+&nbsp;
+<b class="fc">&nbsp;        int n = symbols.size();</b>
+<b class="fc">&nbsp;        double[][] matrix = new double[n][n];</b>
+&nbsp;
+<b class="fc">&nbsp;        for (int i = 0; i &lt; n; i++) {</b>
+<b class="fc">&nbsp;            List&lt;BigDecimal&gt; left = dailyReturns.get(symbols.get(i));</b>
+&nbsp;
+<b class="fc">&nbsp;            for (int j = 0; j &lt; n; j++) {</b>
+<b class="fc">&nbsp;                List&lt;BigDecimal&gt; right = dailyReturns.get(symbols.get(j));</b>
+<b class="fc">&nbsp;                matrix[i][j] = covariance(left, right);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return new Array2DRowRealMatrix(matrix);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Map&lt;String, BigDecimal&gt; calculateExpectedDailyReturns(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, List&lt;BigDecimal&gt;&gt; dailyReturns) {
+&nbsp;
+<b class="fc">&nbsp;        java.util.LinkedHashMap&lt;String, BigDecimal&gt; result = new java.util.LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (String symbol : symbols) {</b>
+<b class="fc">&nbsp;            List&lt;BigDecimal&gt; returns = dailyReturns.get(symbol);</b>
+<b class="fc">&nbsp;            result.put(symbol, average(returns));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal average(List&lt;BigDecimal&gt; values) {
+<b class="fc">&nbsp;        if (values == null || values.isEmpty()) {</b>
+<b class="fc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal sum = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;        for (BigDecimal value : values) {</b>
+<b class="fc">&nbsp;            sum = sum.add(value, MC);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return sum.divide(BigDecimal.valueOf(values.size()), MC);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private double covariance(List&lt;BigDecimal&gt; a, List&lt;BigDecimal&gt; b) {
+<b class="pc">&nbsp;        if (a == null || b == null || a.isEmpty() || b.isEmpty() || a.size() != b.size()) {</b>
+<b class="fc">&nbsp;            return 0.0;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        double meanA = a.stream().mapToDouble(BigDecimal::doubleValue).average().orElse(0.0);</b>
+<b class="fc">&nbsp;        double meanB = b.stream().mapToDouble(BigDecimal::doubleValue).average().orElse(0.0);</b>
+&nbsp;
+<b class="fc">&nbsp;        double sum = 0.0;</b>
+<b class="fc">&nbsp;        for (int i = 0; i &lt; a.size(); i++) {</b>
+<b class="fc">&nbsp;            sum += (a.get(i).doubleValue() - meanA) * (b.get(i).doubleValue() - meanB);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return a.size() &gt; 1 ? sum / (a.size() - 1) : 0.0;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

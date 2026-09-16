@@ -1,0 +1,140 @@
+@startuml
+title Figure 4.3 Backend Layered Design
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Browser / Frontend" as Browser
+
+package "Security Layer" {
+  component "SecurityConfig\n(Spring Security)" as SecurityConfig
+  component "CustomUserDetailsService" as UserDetails
+  component "AppUserPrincipal" as Principal
+}
+
+package "Web Layer" {
+  component "Page Controllers\nPortfolioPageController\nPortfolioOverviewController\nAuthPageController" as PageControllers
+
+  component "Portfolio API Controllers\nPortfolioActivityController\nPortfolioHoldingController\nPortfolioAllocationController\nPortfolioAnalysisController" as PortfolioControllers
+
+  component "Assistant Controllers\nInvestorProfileController\nFinancialAssistantController" as AssistantControllers
+
+  component "Asset and Market Controllers\nAssetProfileController\nAssetSearchController\nBenchmarkSearchController" as AssetMarketControllers
+
+  component "Explanation Controller\nPortfolioExplanationController" as ExplanationController
+
+  component "GlobalExceptionHandler" as ExceptionHandler
+}
+
+package "Service Layer" {
+  component "UserService" as UserService
+  component "ActivityService" as ActivityService
+  component "HoldingService" as HoldingService
+  component "AllocationService" as AllocationService
+  component "BenchmarkService" as BenchmarkService
+  component "PortfolioOptimisationService" as OptimisationService
+  component "AssetProfileService" as AssetProfileService
+  component "AssetMetadataSyncService" as MetadataSyncService
+  component "MarketDataService" as MarketDataService
+
+  component "Assistant Services\nInvestorProfileService\nRiskAssessmentService\nTargetAllocationService\nSuitabilityAnalysisService\nAssistantInsightService\nFinancialAssistantService" as AssistantServices
+
+  component "Explanation Services\nExplainabilityService\nCachedLlmExplanationService" as ExplanationServices
+}
+
+package "Portfolio Optimisation Module" {
+  interface "PortfolioOptimisationAlgorithm" as OptimisationAlgorithm
+  component "MeanVarianceOptimisationAlgorithm" as MVO
+  component "PortfolioStatisticsCalculator" as StatsCalculator
+  component "RebalanceSuggestionCalculator" as RebalanceCalculator
+}
+
+package "Integration Layer" {
+  interface "MarketDataProvider" as MarketDataProvider
+  component "AlphaVantageMarketDataProvider" as AlphaProvider
+
+  interface "LlmExplanationClient" as LlmClient
+  component "GeminiExplanationClient" as GeminiClient
+}
+
+package "Repository Layer" {
+  component "UserRepository" as UserRepo
+  component "ActivityRepository" as ActivityRepo
+  component "AssetProfileRepository" as AssetRepo
+  component "InvestorProfileRepository" as InvestorRepo
+}
+
+database "PostgreSQL Database" as DB
+cloud "Alpha Vantage API" as AlphaAPI
+cloud "Gemini API\nGoogle GenAI" as GeminiAPI
+
+Browser --> SecurityConfig : HTTP requests
+SecurityConfig --> PageControllers : authorised page requests
+SecurityConfig --> PortfolioControllers : authorised API requests
+SecurityConfig --> AssistantControllers : authorised API requests
+SecurityConfig --> AssetMarketControllers : authorised API requests
+SecurityConfig --> ExplanationController : authorised API requests
+
+SecurityConfig --> UserDetails
+UserDetails --> UserRepo
+UserDetails --> Principal
+
+PageControllers --> UserService
+PortfolioControllers --> ActivityService
+PortfolioControllers --> HoldingService
+PortfolioControllers --> AllocationService
+PortfolioControllers --> BenchmarkService
+PortfolioControllers --> OptimisationService
+
+AssistantControllers --> AssistantServices
+AssistantControllers --> UserService
+
+AssetMarketControllers --> AssetProfileService
+AssetMarketControllers --> MetadataSyncService
+AssetMarketControllers --> MarketDataService
+
+ExplanationController --> ExplanationServices
+
+ActivityService --> ActivityRepo
+HoldingService --> ActivityRepo
+HoldingService --> AssetRepo
+AllocationService --> HoldingService
+BenchmarkService --> HoldingService
+BenchmarkService --> MarketDataService
+
+OptimisationService --> HoldingService
+OptimisationService --> MarketDataService
+OptimisationService --> OptimisationAlgorithm
+OptimisationAlgorithm <|.. MVO
+MVO --> StatsCalculator
+MVO --> RebalanceCalculator
+
+AssetProfileService --> AssetRepo
+MetadataSyncService --> AssetRepo
+MetadataSyncService --> MarketDataService
+
+AssistantServices --> InvestorRepo
+AssistantServices --> AllocationService
+AssistantServices --> HoldingService
+
+ExplanationServices --> LlmClient
+LlmClient <|.. GeminiClient
+GeminiClient --> GeminiAPI : explanation request
+
+MarketDataService --> MarketDataProvider
+MarketDataProvider <|.. AlphaProvider
+AlphaProvider --> AlphaAPI : search / metadata / quotes / historical data
+
+UserRepo --> DB
+ActivityRepo --> DB
+AssetRepo --> DB
+InvestorRepo --> DB
+
+ExceptionHandler ..> PageControllers : handles exceptions
+ExceptionHandler ..> PortfolioControllers : handles exceptions
+ExceptionHandler ..> AssistantControllers : handles exceptions
+ExceptionHandler ..> AssetMarketControllers : handles exceptions
+ExceptionHandler ..> ExplanationController : handles exceptions
+
+@enduml

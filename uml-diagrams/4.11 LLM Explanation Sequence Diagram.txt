@@ -1,0 +1,34 @@
+@startuml
+title Figure 4.11 LLM Explanation Sequence
+
+actor User
+participant "analysis.html\nportfolio-analysis.js" as Frontend
+participant "PortfolioExplanationController" as Controller
+participant "ExplainabilityService" as ExplainabilityService
+participant "CachedLlmExplanationService" as CachedExplanation
+participant "GeminiExplanationClient" as GeminiClient
+participant "<<external>>\nGemini API\nGoogle GenAI" as Gemini
+
+User -> Frontend : Click Explain
+Frontend -> Controller : Send calculated analysis context
+
+Controller -> ExplainabilityService : build explanation request
+ExplainabilityService -> CachedExplanation : request explanation
+
+alt explanation cached
+  CachedExplanation --> ExplainabilityService : cached explanation
+else not cached
+  CachedExplanation -> GeminiClient : send structured prompt
+  GeminiClient -> Gemini : explanation request
+  Gemini --> GeminiClient : explanation text
+  GeminiClient --> CachedExplanation : explanation text
+  CachedExplanation --> ExplainabilityService : explanation text
+end
+
+ExplainabilityService --> Controller : PortfolioExplanationResponse
+Controller --> Frontend : JSON response
+Frontend --> User : Display beginner-friendly explanation
+
+
+
+@enduml

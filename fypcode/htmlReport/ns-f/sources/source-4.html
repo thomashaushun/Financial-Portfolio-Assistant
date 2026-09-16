@@ -1,0 +1,257 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AssetProfileService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service</a>
+</div>
+
+<h1>Coverage Summary for Class: AssetProfileService (com.tsh11.fypcode.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AssetProfileService</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/67)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetProfile;
+&nbsp;import com.tsh11.fypcode.dto.request.AssetProfileRequest;
+&nbsp;import com.tsh11.fypcode.dto.response.AssetProfileResponse;
+&nbsp;import com.tsh11.fypcode.repository.AssetProfileRepository;
+&nbsp;import jakarta.persistence.EntityNotFoundException;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;@Service
+&nbsp;@Transactional
+&nbsp;public class AssetProfileService {
+&nbsp;
+&nbsp;    private final AssetProfileRepository assetProfileRepository;
+&nbsp;
+<b class="nc">&nbsp;    public AssetProfileService(AssetProfileRepository assetProfileRepository) {</b>
+<b class="nc">&nbsp;        this.assetProfileRepository = assetProfileRepository;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public List&lt;AssetProfileResponse&gt; getAllForUser(UUID userId) {
+<b class="nc">&nbsp;        return assetProfileRepository.findByUserIdOrderBySymbolAsc(userId)</b>
+<b class="nc">&nbsp;                .stream()</b>
+<b class="nc">&nbsp;                .map(this::toResponse)</b>
+<b class="nc">&nbsp;                .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public AssetProfileResponse getByIdForUser(UUID userId, UUID id) {
+<b class="nc">&nbsp;        AssetProfile profile = assetProfileRepository.findByIdAndUserId(id, userId)</b>
+<b class="nc">&nbsp;                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Asset profile not found: &quot; + id));</b>
+<b class="nc">&nbsp;        return toResponse(profile);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public AssetProfileResponse createForUser(UUID userId, AssetProfileRequest request) {
+<b class="nc">&nbsp;        String normalizedSymbol = normalizeSymbol(request.getSymbol());</b>
+&nbsp;
+<b class="nc">&nbsp;        if (assetProfileRepository.existsByUserIdAndSymbolIgnoreCase(userId, normalizedSymbol)) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Asset profile already exists for symbol: &quot; + normalizedSymbol);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        AssetProfile profile = new AssetProfile();</b>
+<b class="nc">&nbsp;        profile.setUserId(userId);</b>
+<b class="nc">&nbsp;        applyRequest(profile, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        AssetProfile saved = assetProfileRepository.save(profile);</b>
+<b class="nc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public AssetProfileResponse updateForUser(UUID userId, UUID id, AssetProfileRequest request) {
+<b class="nc">&nbsp;        AssetProfile profile = assetProfileRepository.findByIdAndUserId(id, userId)</b>
+<b class="nc">&nbsp;                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Asset profile not found: &quot; + id));</b>
+&nbsp;
+<b class="nc">&nbsp;        String normalizedSymbol = normalizeSymbol(request.getSymbol());</b>
+<b class="nc">&nbsp;        assetProfileRepository.findByUserIdAndSymbolIgnoreCase(userId, normalizedSymbol)</b>
+<b class="nc">&nbsp;                .ifPresent(existing -&gt; {</b>
+<b class="nc">&nbsp;                    if (!existing.getId().equals(id)) {</b>
+<b class="nc">&nbsp;                        throw new IllegalArgumentException(&quot;Another asset profile already uses symbol: &quot; + normalizedSymbol);</b>
+&nbsp;                    }
+&nbsp;                });
+&nbsp;
+<b class="nc">&nbsp;        applyRequest(profile, request);</b>
+&nbsp;
+<b class="nc">&nbsp;        AssetProfile saved = assetProfileRepository.save(profile);</b>
+<b class="nc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void deleteForUser(UUID userId, UUID id) {
+<b class="nc">&nbsp;        AssetProfile profile = assetProfileRepository.findByIdAndUserId(id, userId)</b>
+<b class="nc">&nbsp;                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Asset profile not found: &quot; + id));</b>
+&nbsp;
+<b class="nc">&nbsp;        assetProfileRepository.delete(profile);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void applyRequest(AssetProfile profile, AssetProfileRequest request) {
+<b class="nc">&nbsp;        profile.setSymbol(normalizeSymbol(request.getSymbol()));</b>
+<b class="nc">&nbsp;        profile.setDisplayName(request.getDisplayName().trim());</b>
+<b class="nc">&nbsp;        profile.setAssetClass(request.getAssetClass());</b>
+<b class="nc">&nbsp;        profile.setSector(normalizeOptional(request.getSector()));</b>
+<b class="nc">&nbsp;        profile.setMarket(normalizeOptional(request.getMarket()));</b>
+<b class="nc">&nbsp;        profile.setCurrency(request.getCurrency().trim().toUpperCase());</b>
+<b class="nc">&nbsp;        profile.setManualValuationRequired(request.isManualValuationRequired());</b>
+<b class="nc">&nbsp;        profile.setPriceDataSupported(request.isPriceDataSupported());</b>
+<b class="nc">&nbsp;        profile.setDataSource(request.getDataSource());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private AssetProfileResponse toResponse(AssetProfile profile) {
+<b class="nc">&nbsp;        AssetProfileResponse response = new AssetProfileResponse();</b>
+<b class="nc">&nbsp;        response.setId(profile.getId());</b>
+<b class="nc">&nbsp;        response.setSymbol(profile.getSymbol());</b>
+<b class="nc">&nbsp;        response.setDisplayName(profile.getDisplayName());</b>
+<b class="nc">&nbsp;        response.setAssetClass(profile.getAssetClass());</b>
+<b class="nc">&nbsp;        response.setSector(profile.getSector());</b>
+<b class="nc">&nbsp;        response.setMarket(profile.getMarket());</b>
+<b class="nc">&nbsp;        response.setCurrency(profile.getCurrency());</b>
+<b class="nc">&nbsp;        response.setManualValuationRequired(profile.isManualValuationRequired());</b>
+<b class="nc">&nbsp;        response.setPriceDataSupported(profile.isPriceDataSupported());</b>
+<b class="nc">&nbsp;        response.setDataSource(profile.getDataSource());</b>
+<b class="nc">&nbsp;        response.setCreatedAt(profile.getCreatedAt());</b>
+<b class="nc">&nbsp;        response.setUpdatedAt(profile.getUpdatedAt());</b>
+<b class="nc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String normalizeSymbol(String symbol) {
+<b class="nc">&nbsp;        return symbol == null ? null : symbol.trim().toUpperCase();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String normalizeOptional(String value) {
+<b class="nc">&nbsp;        if (value == null || value.trim().isEmpty()) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return value.trim();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public AssetProfile findEntityByUserIdAndSymbol(UUID userId, String symbol) {
+<b class="nc">&nbsp;        if (symbol == null || symbol.isBlank()) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return assetProfileRepository.findByUserIdAndSymbolIgnoreCase(userId, symbol.trim())</b>
+<b class="nc">&nbsp;                .orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void markHistoricalUnsupported(UUID userId, String symbol) {
+<b class="nc">&nbsp;        if (symbol == null || symbol.isBlank()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        assetProfileRepository.findByUserIdAndSymbolIgnoreCase(userId, symbol.trim())</b>
+<b class="nc">&nbsp;                .ifPresent(profile -&gt; {</b>
+<b class="nc">&nbsp;                    profile.setHistoricalPriceSupported(false);</b>
+<b class="nc">&nbsp;                    profile.setOptimisationSupported(false);</b>
+<b class="nc">&nbsp;                    assetProfileRepository.save(profile);</b>
+&nbsp;                });
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

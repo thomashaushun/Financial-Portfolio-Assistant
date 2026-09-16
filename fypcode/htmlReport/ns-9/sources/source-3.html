@@ -1,0 +1,187 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > InvestorProfileRequest</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.request</a>
+</div>
+
+<h1>Coverage Summary for Class: InvestorProfileRequest (com.tsh11.fypcode.dto.request)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">InvestorProfileRequest</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (13/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (13/13)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.request;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.investor.IncomeStabilityLevel;
+&nbsp;import com.tsh11.fypcode.domain.investor.InvestmentExperienceLevel;
+&nbsp;import com.tsh11.fypcode.domain.investor.InvestmentGoal;
+&nbsp;import com.tsh11.fypcode.domain.investor.RiskToleranceLevel;
+&nbsp;import jakarta.validation.constraints.Max;
+&nbsp;import jakarta.validation.constraints.Min;
+&nbsp;import jakarta.validation.constraints.NotNull;
+&nbsp;
+&nbsp;//the data sent from the frontend when the user creates or updates their investor profile.
+&nbsp;//This file represents the questionnaire answers entered by the user.
+&nbsp;
+<b class="fc">&nbsp;public class InvestorProfileRequest {</b>
+&nbsp;
+&nbsp;    @Min(value = 18, message = &quot;Age must be at least 18&quot;)
+&nbsp;    @Max(value = 116, message = &quot;Age must be realistic&quot;) //oldest person 116 yr Ethel Caterham
+&nbsp;    private int age;
+&nbsp;
+&nbsp;    @Min(value = 1, message = &quot;Investment horizon must be at least 1 year&quot;)
+&nbsp;    @Max(value = 60, message = &quot;Investment horizon must be realistic&quot;)
+&nbsp;    private int investmentHorizonYears;
+&nbsp;
+&nbsp;    @NotNull
+&nbsp;    private RiskToleranceLevel riskTolerance;
+&nbsp;
+&nbsp;    @NotNull
+&nbsp;    private InvestmentExperienceLevel investmentExperience;
+&nbsp;
+&nbsp;    @NotNull
+&nbsp;    private IncomeStabilityLevel incomeStability;
+&nbsp;
+&nbsp;    @NotNull
+&nbsp;    private InvestmentGoal investmentGoal;
+&nbsp;
+&nbsp;    public int getAge() {
+<b class="fc">&nbsp;        return age;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAge(int age) {
+<b class="fc">&nbsp;        this.age = age;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public int getInvestmentHorizonYears() {
+<b class="fc">&nbsp;        return investmentHorizonYears;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setInvestmentHorizonYears(int investmentHorizonYears) {
+<b class="fc">&nbsp;        this.investmentHorizonYears = investmentHorizonYears;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public RiskToleranceLevel getRiskTolerance() {
+<b class="fc">&nbsp;        return riskTolerance;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setRiskTolerance(RiskToleranceLevel riskTolerance) {
+<b class="fc">&nbsp;        this.riskTolerance = riskTolerance;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public InvestmentExperienceLevel getInvestmentExperience() {
+<b class="fc">&nbsp;        return investmentExperience;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setInvestmentExperience(InvestmentExperienceLevel investmentExperience) {
+<b class="fc">&nbsp;        this.investmentExperience = investmentExperience;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public IncomeStabilityLevel getIncomeStability() {
+<b class="fc">&nbsp;        return incomeStability;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setIncomeStability(IncomeStabilityLevel incomeStability) {
+<b class="fc">&nbsp;        this.incomeStability = incomeStability;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public InvestmentGoal getInvestmentGoal() {
+<b class="fc">&nbsp;        return investmentGoal;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setInvestmentGoal(InvestmentGoal investmentGoal) {
+<b class="fc">&nbsp;        this.investmentGoal = investmentGoal;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

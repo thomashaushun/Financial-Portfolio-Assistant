@@ -1,0 +1,93 @@
+<!--
+Reusable header fragment for all portfolio pages.
+Each page passes:
+- pageTitle: heading shown on the left
+- pageSubtitle: short page description
+- activePage: used to highlight the current navigation button
+This avoids duplicating the same header/navigation code in every portfolio page.
+-->
+<div th:fragment="portfolioHeader(pageTitle, pageSubtitle, activePage)">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+
+        <!--
+        Page-specific title and subtitle.
+        The shared header keeps the design where the page name and description appear on the left.
+        The actual text is supplied by each page when it includes this fragment.
+        -->
+        <div class="flex-grow-1 min-width-0">
+            <h1 class="h3 mb-1" th:text="${pageTitle}">Portfolio Page</h1>
+            <p class="text-muted mb-0" th:text="${pageSubtitle}">Portfolio page description.</p>
+        </div>
+
+        <div class="text-end flex-shrink-0">
+
+            <!--
+            Authenticated user area.
+            portfolioSetup.displayName is supplied by PortfolioModelAdvice.
+            The logout form posts to Spring Security's /logout endpoint.
+            CSRF token is included when Spring Security provides one.
+            -->
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-2">
+                <span class="text-muted small">
+                    Hello <span class="fw-semibold" th:text="${portfolioSetup.displayName}">User</span>
+                </span>
+                <form th:action="@{/logout}" method="post" class="mb-0">
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+                </form>
+            </div>
+
+            <!--
+            Shared portfolio navigation.
+            activePage controls which button is highlighted.
+            Overview, Investor profile and Activities remain available because they support the setup flow.
+            Data-dependent pages are disabled until setupComplete is true.
+            -->
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
+
+                <!-- Overview is the landing page and remains available for onboarding guidance. -->
+                <a th:class="${activePage == 'overview'} ? 'btn btn-primary' : 'btn btn-outline-secondary'"
+                   th:href="@{/portfolio/overview}">Overview</a>
+
+                <!-- Investor profile remains available because it is required for setup completion. -->
+                <a th:class="${activePage == 'investor-profile'} ? 'btn btn-primary' : 'btn btn-outline-secondary'"
+                   th:href="@{/portfolio/investor-profile}">Investor profile</a>
+
+                <!--
+                Asset profile is locked until setupComplete is true.
+                This is a UI-only onboarding lock, not a security boundary.
+                -->
+                <a th:class="${activePage == 'asset-profiles'} ? 'btn btn-primary' : (${portfolioSetup.setupComplete} ? 'btn btn-outline-secondary' : 'btn btn-outline-secondary disabled')"
+                   th:href="${portfolioSetup.setupComplete or activePage == 'asset-profiles'} ? @{/portfolio/asset-profiles} : '#'"
+                   th:attr="aria-disabled=${!(portfolioSetup.setupComplete or activePage == 'asset-profiles')}, tabindex=${(portfolioSetup.setupComplete or activePage == 'asset-profiles') ? null : -1}">Asset profile</a>
+
+                <!-- Activities remains available because adding an activity is required for setup completion. -->
+                <a th:class="${activePage == 'activities'} ? 'btn btn-primary' : 'btn btn-outline-secondary'"
+                   th:href="@{/portfolio/activities}">Activities</a>
+
+                <!-- Holdings depends on activity-derived portfolio data, so it is locked before setup completion. -->
+                <a th:class="${activePage == 'holdings'} ? 'btn btn-primary' : (${portfolioSetup.setupComplete} ? 'btn btn-outline-secondary' : 'btn btn-outline-secondary disabled')"
+                   th:href="${portfolioSetup.setupComplete or activePage == 'holdings'} ? @{/portfolio/holdings} : '#'"
+                   th:attr="aria-disabled=${!(portfolioSetup.setupComplete or activePage == 'holdings')}, tabindex=${(portfolioSetup.setupComplete or activePage == 'holdings') ? null : -1}">Holdings</a>
+
+                <!-- Allocation depends on derived holdings and metadata, so it is locked before setup completion. -->
+                <a th:class="${activePage == 'allocation'} ? 'btn btn-primary' : (${portfolioSetup.setupComplete} ? 'btn btn-outline-secondary' : 'btn btn-outline-secondary disabled')"
+                   th:href="${portfolioSetup.setupComplete or activePage == 'allocation'} ? @{/portfolio/allocation} : '#'"
+                   th:attr="aria-disabled=${!(portfolioSetup.setupComplete or activePage == 'allocation')}, tabindex=${(portfolioSetup.setupComplete or activePage == 'allocation') ? null : -1}">Allocation</a>
+
+                <!-- Analysis relies on portfolio data for benchmark comparison, optimisation, explanation and export. -->
+                <a th:class="${activePage == 'analysis'} ? 'btn btn-primary' : (${portfolioSetup.setupComplete} ? 'btn btn-outline-secondary' : 'btn btn-outline-secondary disabled')"
+                   th:href="${portfolioSetup.setupComplete or activePage == 'analysis'} ? @{/portfolio/analysis} : '#'"
+                   th:attr="aria-disabled=${!(portfolioSetup.setupComplete or activePage == 'analysis')}, tabindex=${(portfolioSetup.setupComplete or activePage == 'analysis') ? null : -1}">Analysis</a>
+            </div>
+
+            <!--
+            Onboarding guidance shown only when setup is incomplete.
+            setupComplete means the user has completed an investor profile and added at least one activity.
+            -->
+            <div th:if="${!portfolioSetup.setupComplete}" class="small text-muted mt-2">
+                Complete your investor profile and add at least one activity to unlock all portfolio pages.
+            </div>
+        </div>
+    </div>
+</div>

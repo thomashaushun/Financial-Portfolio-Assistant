@@ -1,0 +1,483 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > RiskParityOptimisationAlgorithm</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.portfolio</a>
+</div>
+
+<h1>Coverage Summary for Class: RiskParityOptimisationAlgorithm (com.tsh11.fypcode.service.portfolio)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">RiskParityOptimisationAlgorithm</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (11/11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    86.1%
+  </span>
+  <span class="absValue">
+    (31/36)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    98%
+  </span>
+  <span class="absValue">
+    (99/101)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.portfolio;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.dto.EfficientFrontierPointDto;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioAlgorithm;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioMetricsDto;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationAssetResult;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationRequest;
+&nbsp;import com.tsh11.fypcode.dto.PortfolioOptimisationResult;
+&nbsp;import org.apache.commons.math3.linear.RealMatrix;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.math.MathContext;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.LinkedHashMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;/*
+&nbsp;main idea: target weight = inverse volatility / total inverse volatility
+&nbsp;High volatility asset  → lower target weight
+&nbsp;Low volatility asset   → higher target weight
+&nbsp;*/
+&nbsp;
+&nbsp;@Component
+&nbsp;public class RiskParityOptimisationAlgorithm implements PortfolioOptimisationAlgorithm {
+&nbsp;
+<b class="fc">&nbsp;    private static final MathContext MC = MathContext.DECIMAL64;</b>
+<b class="fc">&nbsp;    private static final BigDecimal ZERO = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private static final BigDecimal ONE = BigDecimal.ONE;</b>
+<b class="fc">&nbsp;    private static final BigDecimal TRADING_DAYS_PER_YEAR = new BigDecimal(&quot;252&quot;);</b>
+&nbsp;
+&nbsp;    private final PortfolioStatisticsCalculator statisticsCalculator;
+&nbsp;    private final RebalanceSuggestionCalculator rebalanceSuggestionCalculator;
+&nbsp;
+&nbsp;    //constructor
+&nbsp;    public RiskParityOptimisationAlgorithm(
+&nbsp;            PortfolioStatisticsCalculator statisticsCalculator,
+<b class="fc">&nbsp;            RebalanceSuggestionCalculator rebalanceSuggestionCalculator) {</b>
+<b class="fc">&nbsp;        this.statisticsCalculator = statisticsCalculator;</b>
+<b class="fc">&nbsp;        this.rebalanceSuggestionCalculator = rebalanceSuggestionCalculator;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // used for user drop down choice in analysis.html
+&nbsp;    @Override
+&nbsp;    public PortfolioAlgorithm getAlgorithmType() {
+<b class="fc">&nbsp;        return PortfolioAlgorithm.RISK_PARITY;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //main function
+&nbsp;    //runs the main flow
+&nbsp;    /*
+&nbsp;    1. Validate request.
+&nbsp;    2. Extract symbols, current weights, daily returns and risk-free rate.
+&nbsp;    3. Calculate expected daily returns.
+&nbsp;    4. Calculate covariance matrix.
+&nbsp;    5. Calculate risk parity target weights using inverse volatility.
+&nbsp;    6. Calculate current portfolio metrics.
+&nbsp;    7. Calculate risk parity portfolio metrics.
+&nbsp;    8. Build asset-level result rows.
+&nbsp;    9. Build suggestions.
+&nbsp;    10. Return PortfolioOptimisationResult.
+&nbsp;     */
+&nbsp;    @Override
+&nbsp;    public PortfolioOptimisationResult optimise(PortfolioOptimisationRequest request) {
+&nbsp;        /*
+&nbsp;        Validation step, rejects the request if:
+&nbsp;        request is null
+&nbsp;        symbols are missing
+&nbsp;        current weights are missing
+&nbsp;        daily returns are missing
+&nbsp;         */
+<b class="fc">&nbsp;        validateRequest(request);</b>
+&nbsp;
+&nbsp;        // fetching data using request.get
+&nbsp;        // inputs required for the algorithm
+&nbsp;        /*
+&nbsp;        example:
+&nbsp;        symbols = [AAPL, SPY, VOO]
+&nbsp;
+&nbsp;        currentWeights:
+&nbsp;        AAPL = 0.50
+&nbsp;        SPY  = 0.30
+&nbsp;        VOO  = 0.20
+&nbsp;
+&nbsp;        dailyReturns:
+&nbsp;        AAPL = [0.01, -0.02, 0.015, ...]
+&nbsp;        SPY  = [0.005, -0.01, 0.007, ...]
+&nbsp;        VOO  = [0.004, -0.008, 0.006, ...]
+&nbsp;         */
+<b class="fc">&nbsp;        List&lt;String&gt; symbols = request.getSymbols();</b>
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; currentWeights = request.getCurrentWeights();</b>
+<b class="fc">&nbsp;        Map&lt;String, List&lt;BigDecimal&gt;&gt; dailyReturns = request.getDailyReturns();</b>
+<b class="fc">&nbsp;        BigDecimal riskFreeRate = request.getRiskFreeRate();</b>
+&nbsp;
+&nbsp;        // calculates average daily return for each asset
+&nbsp;        /*
+&nbsp;        example:
+&nbsp;        AAPL daily returns = [1%, -2%, 1.5%]
+&nbsp;        Average daily return = 0.1667%
+&nbsp;         */
+&nbsp;        // Risk parity does not use expected returns to decide target weights.
+&nbsp;        // These expected daily returns are used to calculate portfolio metrics such as expected annual return and Sharpe ratio.
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; expectedDailyReturns =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateExpectedDailyReturns(symbols, dailyReturns);</b>
+&nbsp;
+&nbsp;        //Calculate covariance matrix
+&nbsp;        //The covariance matrix is used later to calculate portfolio volatility
+<b class="fc">&nbsp;        RealMatrix covarianceMatrix =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateCovarianceMatrix(symbols, dailyReturns);</b>
+&nbsp;
+&nbsp;        // Core of the algorithm
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; targetWeights = calculateInverseVolatilityWeights(symbols, dailyReturns);</b>
+&nbsp;
+&nbsp;        // calculates the current portfolio’s return, volatility and Sharpe ratio.
+<b class="fc">&nbsp;        PortfolioMetricsDto currentMetrics =</b>
+<b class="fc">&nbsp;                calculateMetrics(symbols, currentWeights, expectedDailyReturns, covarianceMatrix, riskFreeRate);</b>
+&nbsp;
+&nbsp;        // calculates the same metrics after applying risk parity target weights.
+<b class="fc">&nbsp;        PortfolioMetricsDto riskParityMetrics =</b>
+<b class="fc">&nbsp;                calculateMetrics(symbols, targetWeights, expectedDailyReturns, covarianceMatrix, riskFreeRate);</b>
+&nbsp;
+&nbsp;        // Build result
+<b class="fc">&nbsp;        PortfolioOptimisationResult result = new PortfolioOptimisationResult();</b>
+<b class="fc">&nbsp;        result.setAlgorithm(getAlgorithmType());</b>
+<b class="fc">&nbsp;        result.setCurrentPortfolio(currentMetrics);</b>
+<b class="fc">&nbsp;        result.setOptimisedPortfolio(riskParityMetrics);</b>
+<b class="fc">&nbsp;        result.setAssets(toAssetResults(symbols, currentWeights, targetWeights));</b>
+<b class="fc">&nbsp;        result.setEfficientFrontier(List.of(toFrontierPoint(riskParityMetrics, targetWeights)));</b>
+<b class="fc">&nbsp;        result.setSuggestions(</b>
+<b class="fc">&nbsp;                rebalanceSuggestionCalculator.calculateSuggestions(currentWeights, targetWeights)</b>
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateRequest(PortfolioOptimisationRequest request) {
+<b class="fc">&nbsp;        if (request == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Portfolio optimisation request must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (request.getSymbols() == null || request.getSymbols().isEmpty()) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;At least one asset is required.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (request.getCurrentWeights() == null || request.getCurrentWeights().isEmpty()) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Current weights are required.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (request.getDailyReturns() == null || request.getDailyReturns().isEmpty()) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Historical return series are required.&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Core of the algorithm
+&nbsp;    /*
+&nbsp;    For each asset:
+&nbsp;    1. Get daily returns.
+&nbsp;    2. Calculate annualised volatility.
+&nbsp;    3. Calculate inverse volatility = 1 / volatility.
+&nbsp;    4. Add inverse volatility to total.
+&nbsp;
+&nbsp;    Then:
+&nbsp;    5. Divide each inverse volatility by the total inverse volatility.
+&nbsp;    6. Return target weights.
+&nbsp;     */
+&nbsp;
+&nbsp;    private Map&lt;String, BigDecimal&gt; calculateInverseVolatilityWeights(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, List&lt;BigDecimal&gt;&gt; dailyReturns) {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; inverseVolatilities = new LinkedHashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;        BigDecimal totalInverseVolatility = ZERO;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (String symbol : symbols) {</b>
+<b class="fc">&nbsp;            List&lt;BigDecimal&gt; returns = dailyReturns.get(symbol);</b>
+&nbsp;
+<b class="fc">&nbsp;            BigDecimal annualisedVolatility = calculateAnnualisedVolatility(returns);</b>
+&nbsp;
+<b class="fc">&nbsp;            if (annualisedVolatility.compareTo(ZERO) &lt;= 0) {</b>
+<b class="fc">&nbsp;                throw new IllegalArgumentException(</b>
+&nbsp;                        &quot;Risk parity cannot be calculated because &quot; + symbol + &quot; has zero or invalid volatility.&quot;
+&nbsp;                );
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            BigDecimal inverseVolatility = ONE.divide(annualisedVolatility, MC);</b>
+<b class="fc">&nbsp;            inverseVolatilities.put(symbol, inverseVolatility);</b>
+<b class="fc">&nbsp;            totalInverseVolatility = totalInverseVolatility.add(inverseVolatility, MC);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (totalInverseVolatility.compareTo(ZERO) &lt;= 0) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Risk parity cannot be calculated because total inverse volatility is zero.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, BigDecimal&gt; weights = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (String symbol : symbols) {</b>
+<b class="fc">&nbsp;            BigDecimal weight = inverseVolatilities.get(symbol).divide(totalInverseVolatility, MC);</b>
+<b class="fc">&nbsp;            weights.put(symbol, weight);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return weights;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+&nbsp;    calculates an asset’s annualised volatility from its daily returns.
+&nbsp;
+&nbsp;    1. If fewer than two return values exist, return zero.
+&nbsp;    2. Calculate average daily return.
+&nbsp;    3. For each daily return:
+&nbsp;       - subtract the average
+&nbsp;       - square the difference
+&nbsp;       - add it to total
+&nbsp;    4. Divide by n - 1 to calculate sample variance.
+&nbsp;    5. Take square root to get daily standard deviation.
+&nbsp;    6. Multiply by sqrt(252) to annualise.
+&nbsp;     */
+&nbsp;    /*
+&nbsp;    Formula:
+&nbsp;
+&nbsp;    Daily variance:
+&nbsp;    variance = Σ(return - mean)² / (n - 1)
+&nbsp;
+&nbsp;    Daily volatility:
+&nbsp;    daily volatility = √variance
+&nbsp;
+&nbsp;    Annualised volatility:
+&nbsp;    annualised volatility = daily volatility × √252
+&nbsp;     */
+&nbsp;    private BigDecimal calculateAnnualisedVolatility(List&lt;BigDecimal&gt; returns) {
+<b class="pc">&nbsp;        if (returns == null || returns.size() &lt; 2) {</b>
+<b class="fc">&nbsp;            return ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal mean = average(returns);</b>
+<b class="fc">&nbsp;        BigDecimal sumSquaredDifferences = ZERO;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (BigDecimal value : returns) {</b>
+<b class="fc">&nbsp;            BigDecimal difference = value.subtract(mean, MC);</b>
+<b class="fc">&nbsp;            sumSquaredDifferences = sumSquaredDifferences.add(difference.multiply(difference, MC), MC);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal variance = sumSquaredDifferences.divide(</b>
+<b class="fc">&nbsp;                BigDecimal.valueOf(returns.size() - 1L),</b>
+&nbsp;                MC
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        double annualisedVolatility = Math.sqrt(variance.doubleValue()) * Math.sqrt(TRADING_DAYS_PER_YEAR.doubleValue());</b>
+&nbsp;
+<b class="fc">&nbsp;        return BigDecimal.valueOf(annualisedVolatility);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // calculates the arithmetic average of a list of BigDecimal values.
+&nbsp;    //used by calculateAnnualisedVolatility()
+&nbsp;    private BigDecimal average(List&lt;BigDecimal&gt; values) {
+<b class="pc">&nbsp;        if (values == null || values.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal total = ZERO;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (BigDecimal value : values) {</b>
+<b class="fc">&nbsp;            total = total.add(value, MC);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return total.divide(BigDecimal.valueOf(values.size()), MC);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //calculates portfolio-level metrics for a given weight allocation.
+&nbsp;    /*
+&nbsp;    used twice:
+&nbsp;
+&nbsp;    1. For current weights.
+&nbsp;    2. For risk parity target weights.
+&nbsp;     */
+&nbsp;    /*
+&nbsp;    calculates:
+&nbsp;
+&nbsp;    expected annual return
+&nbsp;    annual volatility
+&nbsp;    Sharpe ratio.
+&nbsp;     */
+&nbsp;    // Sharpe ratio = (annual return - risk free rate) / annual volatility
+&nbsp;    private PortfolioMetricsDto calculateMetrics(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, BigDecimal&gt; weights,
+&nbsp;            Map&lt;String, BigDecimal&gt; expectedDailyReturns,
+&nbsp;            RealMatrix covarianceMatrix,
+&nbsp;            BigDecimal riskFreeRate) {
+&nbsp;
+<b class="fc">&nbsp;        PortfolioMetricsDto dto = new PortfolioMetricsDto();</b>
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal annualReturn =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateAnnualisedReturn(weights, expectedDailyReturns);</b>
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal annualVolatility =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateAnnualisedVolatility(weights, covarianceMatrix, symbols);</b>
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal sharpeRatio =</b>
+<b class="fc">&nbsp;                statisticsCalculator.calculateSharpeRatio(annualReturn, annualVolatility, riskFreeRate);</b>
+&nbsp;
+<b class="fc">&nbsp;        dto.setExpectedAnnualReturn(annualReturn);</b>
+<b class="fc">&nbsp;        dto.setAnnualVolatility(annualVolatility);</b>
+<b class="fc">&nbsp;        dto.setSharpeRatio(sharpeRatio);</b>
+&nbsp;
+<b class="fc">&nbsp;        return dto;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+&nbsp;    creates one result row per asset.
+&nbsp;
+&nbsp;    For each symbol, it stores:
+&nbsp;    symbol
+&nbsp;    current weight
+&nbsp;    target weight
+&nbsp;    difference
+&nbsp;
+&nbsp;    Example:
+&nbsp;    AAPL current = 50%
+&nbsp;    AAPL target = 18%
+&nbsp;    difference = -32%
+&nbsp;
+&nbsp;    The frontend uses this for the allocation comparison table.
+&nbsp;     */
+&nbsp;    private List&lt;PortfolioOptimisationAssetResult&gt; toAssetResults(
+&nbsp;            List&lt;String&gt; symbols,
+&nbsp;            Map&lt;String, BigDecimal&gt; currentWeights,
+&nbsp;            Map&lt;String, BigDecimal&gt; targetWeights) {
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PortfolioOptimisationAssetResult&gt; results = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (String symbol : symbols) {</b>
+<b class="fc">&nbsp;            BigDecimal current = currentWeights.getOrDefault(symbol, ZERO);</b>
+<b class="fc">&nbsp;            BigDecimal target = targetWeights.getOrDefault(symbol, ZERO);</b>
+&nbsp;
+<b class="fc">&nbsp;            PortfolioOptimisationAssetResult item = new PortfolioOptimisationAssetResult();</b>
+<b class="fc">&nbsp;            item.setSymbol(symbol);</b>
+<b class="fc">&nbsp;            item.setCurrentWeight(current);</b>
+<b class="fc">&nbsp;            item.setTargetWeight(target);</b>
+<b class="fc">&nbsp;            item.setWeightDifference(target.subtract(current, MC));</b>
+&nbsp;
+<b class="fc">&nbsp;            results.add(item);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return results;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+&nbsp;    This converts the risk parity portfolio into an EfficientFrontierPointDto.
+&nbsp;
+&nbsp;    However, risk parity does not calculate a full efficient frontier.
+&nbsp;
+&nbsp;    It produces one target allocation, so this function creates one point representing that allocation.
+&nbsp;     */
+&nbsp;    private EfficientFrontierPointDto toFrontierPoint(
+&nbsp;            PortfolioMetricsDto metrics,
+&nbsp;            Map&lt;String, BigDecimal&gt; weights) {
+&nbsp;
+<b class="fc">&nbsp;        EfficientFrontierPointDto point = new EfficientFrontierPointDto();</b>
+<b class="fc">&nbsp;        point.setExpectedAnnualReturn(metrics.getExpectedAnnualReturn());</b>
+<b class="fc">&nbsp;        point.setAnnualVolatility(metrics.getAnnualVolatility());</b>
+<b class="fc">&nbsp;        point.setSharpeRatio(metrics.getSharpeRatio());</b>
+<b class="fc">&nbsp;        point.setWeights(new LinkedHashMap&lt;&gt;(weights));</b>
+&nbsp;
+<b class="fc">&nbsp;        return point;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

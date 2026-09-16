@@ -1,0 +1,320 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > RiskAssessmentService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.assistant</a>
+</div>
+
+<h1>Coverage Summary for Class: RiskAssessmentService (com.tsh11.fypcode.service.assistant)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">RiskAssessmentService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95.2%
+  </span>
+  <span class="absValue">
+    (40/42)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    96.6%
+  </span>
+  <span class="absValue">
+    (57/59)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">RiskAssessmentService$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (11/11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95.2%
+  </span>
+  <span class="absValue">
+    (40/42)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    96.8%
+  </span>
+  <span class="absValue">
+    (61/63)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.assistant;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.investor.IncomeStabilityLevel;
+&nbsp;import com.tsh11.fypcode.domain.investor.InvestmentExperienceLevel;
+&nbsp;import com.tsh11.fypcode.domain.investor.InvestmentGoal;
+&nbsp;import com.tsh11.fypcode.domain.investor.RiskProfileType;
+&nbsp;import com.tsh11.fypcode.domain.investor.RiskToleranceLevel;
+&nbsp;import com.tsh11.fypcode.dto.request.InvestorProfileRequest;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;//Calculates the user’s risk profile from their questionnaire answers.
+&nbsp;//input: questionnaire answers
+&nbsp;//output: system’s risk categories.
+&nbsp;/*
+&nbsp;logic:
+&nbsp;Long horizon + high risk tolerance + stable income = higher score
+&nbsp;Short horizon + low risk tolerance + unstable income = lower score
+&nbsp;*/
+&nbsp;/*
+&nbsp;based on calculated score:
+&nbsp;Low score = Conservative
+&nbsp;Medium score = Balanced
+&nbsp;High score = Growth
+&nbsp;Very high score = Aggressive
+&nbsp; */
+&nbsp;//This turns the system to a more active, personalized approach
+&nbsp;//TODO: implement tests for the rules
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;public class RiskAssessmentService {</b>
+&nbsp;
+&nbsp;    //calculate risk score, sum of result from support function
+&nbsp;    //range 0 - 100
+&nbsp;    public int calculateRiskScore(InvestorProfileRequest request) {
+&nbsp;        //prevent the system from calculating risk using missing input
+<b class="fc">&nbsp;        if (request == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Investor profile request must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        int score = 0;</b>
+<b class="fc">&nbsp;        score += ageScore(request.getAge());</b>
+<b class="fc">&nbsp;        score += horizonScore(request.getInvestmentHorizonYears());</b>
+<b class="fc">&nbsp;        score += toleranceScore(request.getRiskTolerance());</b>
+<b class="fc">&nbsp;        score += experienceScore(request.getInvestmentExperience());</b>
+<b class="fc">&nbsp;        score += incomeStabilityScore(request.getIncomeStability());</b>
+<b class="fc">&nbsp;        score += goalScore(request.getInvestmentGoal());</b>
+&nbsp;
+<b class="fc">&nbsp;        return Math.max(0, Math.min(100, score));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //classify RiskProfileType base on score
+&nbsp;    /*
+&nbsp;    0–30    = CONSERVATIVE
+&nbsp;    31–55   = BALANCED
+&nbsp;    56–80   = GROWTH
+&nbsp;    81–100+ = AGGRESSIVE
+&nbsp;    */
+&nbsp;    public RiskProfileType classify(int riskScore) {
+<b class="fc">&nbsp;        if (riskScore &lt;= 30) {</b>
+<b class="fc">&nbsp;            return RiskProfileType.CONSERVATIVE;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (riskScore &lt;= 55) {</b>
+<b class="fc">&nbsp;            return RiskProfileType.BALANCED;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (riskScore &lt;= 80) {</b>
+<b class="fc">&nbsp;            return RiskProfileType.GROWTH;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return RiskProfileType.AGGRESSIVE;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //calls calculateRiskScore(request) &amp; classify(score) in one function
+&nbsp;    public RiskProfileType classify(InvestorProfileRequest request) {
+<b class="fc">&nbsp;        return classify(calculateRiskScore(request));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //score user&#39;s age
+&nbsp;    //older = low score, younger = high score
+&nbsp;    //reason:
+&nbsp;    //Younger investors usually have a longer time horizon and more time to recover from market volatility.
+&nbsp;    //Older investors receive fewer risk points because they may have less time to recover from losses.
+&nbsp;    private int ageScore(int age) {
+<b class="fc">&nbsp;        if (age &gt;= 60) {</b>
+<b class="fc">&nbsp;            return 4;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (age &gt;= 45) {</b>
+<b class="fc">&nbsp;            return 8;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (age &gt;= 30) {</b>
+<b class="fc">&nbsp;            return 12;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return 16;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //score user investment horizon
+&nbsp;    //logic: longer horizon gets more points
+&nbsp;    //A longer investment horizon means the user may be able to tolerate more short-term volatility.
+&nbsp;    //A short horizon means the user may need the money soon, so the system scores them more conservatively.
+&nbsp;    private int horizonScore(int years) {
+<b class="fc">&nbsp;        if (years &lt;= 2) {</b>
+<b class="fc">&nbsp;            return 3;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (years &lt;= 5) {</b>
+<b class="fc">&nbsp;            return 8;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (years &lt;= 10) {</b>
+<b class="fc">&nbsp;            return 14;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return 20;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //scores the user’s stated risk tolerance.
+&nbsp;    // higher risk tolerance higher score
+&nbsp;    private int toleranceScore(RiskToleranceLevel tolerance) {
+<b class="fc">&nbsp;        if (tolerance == null) {</b>
+<b class="fc">&nbsp;            return 0;</b>
+&nbsp;        }
+<b class="pc">&nbsp;        return switch (tolerance) {</b>
+<b class="fc">&nbsp;            case LOW -&gt; 4;</b>
+<b class="fc">&nbsp;            case MEDIUM -&gt; 12;</b>
+<b class="nc">&nbsp;            case HIGH -&gt; 20;</b>
+<b class="fc">&nbsp;            case VERY_HIGH -&gt; 28;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    //scores the user’s investment experience.
+&nbsp;    // more experience, higher score
+&nbsp;    // low experience, low score
+&nbsp;    private int experienceScore(InvestmentExperienceLevel experience) {
+<b class="fc">&nbsp;        if (experience == null) {</b>
+<b class="fc">&nbsp;            return 0;</b>
+&nbsp;        }
+<b class="pc">&nbsp;        return switch (experience) {</b>
+<b class="fc">&nbsp;            case BEGINNER -&gt; 3;</b>
+<b class="fc">&nbsp;            case INTERMEDIATE -&gt; 8;</b>
+<b class="fc">&nbsp;            case ADVANCED -&gt; 12;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    //scores how stable the user’s income is
+&nbsp;    //high income stability, high score
+&nbsp;    //low income stability, low score
+&nbsp;    private int incomeStabilityScore(IncomeStabilityLevel stability) {
+<b class="fc">&nbsp;        if (stability == null) {</b>
+<b class="fc">&nbsp;            return 0;</b>
+&nbsp;        }
+<b class="pc">&nbsp;        return switch (stability) {</b>
+<b class="fc">&nbsp;            case LOW -&gt; 2;</b>
+<b class="fc">&nbsp;            case MEDIUM -&gt; 6;</b>
+<b class="fc">&nbsp;            case HIGH -&gt; 10;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    //scores the user’s investment objective
+&nbsp;    //logic:
+&nbsp;    //Capital preservation → lower risk
+&nbsp;    //Balanced growth      → medium risk
+&nbsp;    //retirement           → med-high risk
+&nbsp;    //long term            → higher risk
+&nbsp;    private int goalScore(InvestmentGoal goal) {
+<b class="fc">&nbsp;        if (goal == null) {</b>
+<b class="fc">&nbsp;            return 0;</b>
+&nbsp;        }
+<b class="pc">&nbsp;        return switch (goal) {</b>
+<b class="fc">&nbsp;            case CAPITAL_PRESERVATION -&gt; 2;</b>
+<b class="fc">&nbsp;            case BALANCED_GROWTH -&gt; 6;</b>
+<b class="nc">&nbsp;            case RETIREMENT -&gt; 9;</b>
+<b class="fc">&nbsp;            case LONG_TERM_GROWTH -&gt; 12;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

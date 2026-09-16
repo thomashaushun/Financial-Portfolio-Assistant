@@ -1,0 +1,202 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ActualAllocationResponse</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.response</a>
+</div>
+
+<h1>Coverage Summary for Class: ActualAllocationResponse (com.tsh11.fypcode.dto.response)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ActualAllocationResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (19/19)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (27/27)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.response;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;
+&nbsp;//Represents the user’s actual portfolio allocation calculated from current holdings
+&nbsp;//The system reads holdings from HoldingService,
+&nbsp;// groups them into assistant allocation buckets,
+&nbsp;// then calculates percentages based on portfolio value.
+&nbsp;
+&nbsp;//example:
+&nbsp;//Equity: 75%
+&nbsp;//Bond: 0%
+&nbsp;//Cash: 5%
+&nbsp;//Crypto: 20%
+&nbsp;
+<b class="fc">&nbsp;public class ActualAllocationResponse {</b>
+<b class="fc">&nbsp;    private BigDecimal equityPercent = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private BigDecimal bondPercent = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private BigDecimal cashPercent = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private BigDecimal cryptoPercent = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private BigDecimal realEstatePercent = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private BigDecimal otherPercent = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private BigDecimal unclassifiedPercent = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;    private BigDecimal totalPortfolioValue = BigDecimal.ZERO;</b>
+&nbsp;    private boolean etfAssumptionUsed;
+&nbsp;
+&nbsp;    public BigDecimal getEquityPercent() {
+<b class="fc">&nbsp;        return equityPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setEquityPercent(BigDecimal equityPercent) {
+<b class="fc">&nbsp;        this.equityPercent = equityPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getBondPercent() {
+<b class="fc">&nbsp;        return bondPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setBondPercent(BigDecimal bondPercent) {
+<b class="fc">&nbsp;        this.bondPercent = bondPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getCashPercent() {
+<b class="fc">&nbsp;        return cashPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCashPercent(BigDecimal cashPercent) {
+<b class="fc">&nbsp;        this.cashPercent = cashPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getCryptoPercent() {
+<b class="fc">&nbsp;        return cryptoPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCryptoPercent(BigDecimal cryptoPercent) {
+<b class="fc">&nbsp;        this.cryptoPercent = cryptoPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getRealEstatePercent() {
+<b class="fc">&nbsp;        return realEstatePercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setRealEstatePercent(BigDecimal realEstatePercent) {
+<b class="fc">&nbsp;        this.realEstatePercent = realEstatePercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getOtherPercent() {
+<b class="fc">&nbsp;        return otherPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setOtherPercent(BigDecimal otherPercent) {
+<b class="fc">&nbsp;        this.otherPercent = otherPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getUnclassifiedPercent() {
+<b class="fc">&nbsp;        return unclassifiedPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setUnclassifiedPercent(BigDecimal unclassifiedPercent) {
+<b class="fc">&nbsp;        this.unclassifiedPercent = unclassifiedPercent;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getTotalPortfolioValue() {
+<b class="fc">&nbsp;        return totalPortfolioValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setTotalPortfolioValue(BigDecimal totalPortfolioValue) {
+<b class="fc">&nbsp;        this.totalPortfolioValue = totalPortfolioValue;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isEtfAssumptionUsed() {
+<b class="fc">&nbsp;        return etfAssumptionUsed;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setEtfAssumptionUsed(boolean etfAssumptionUsed) {
+<b class="fc">&nbsp;        this.etfAssumptionUsed = etfAssumptionUsed;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

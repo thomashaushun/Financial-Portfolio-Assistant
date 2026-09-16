@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Investor Profile</title>
+
+    <!--
+        These meta tags expose the Spring Security CSRF token to JavaScript.
+        portfolio-investor-profile.js reads them before sending POST/PUT requests, so form saves
+        are accepted by the backend security layer.
+    -->
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <!-- Bootstrap provides the form styling, buttons, cards, layout and popover component. -->
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+
+    <style>
+        /*
+            This class controls the small circular "?" buttons beside questionnaire labels.
+            If asked to change the size/shape of the help buttons, edit this CSS.
+            The actual popover text is not here; it is stored in each button's data-bs-content attribute.
+        */
+        .help-popover-button {
+            width: 1.4rem;
+            height: 1.4rem;
+            line-height: 1.2rem;
+            padding: 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <!--
+        This inserts the shared portfolio header fragment.
+        The third argument, 'investor-profile', marks this page as the active navigation item.
+        If asked where the shared header/navigation is defined, check fragments/portfolio-header.html.
+    -->
+    <div th:replace="~{fragments/portfolio-header :: portfolioHeader('Investor Profile', 'Create a risk profile for educational portfolio suitability guidance.', 'investor-profile')}"></div>
+
+    <!-- JavaScript writes success/error messages here after loading or saving the profile. -->
+    <div id="alertContainer"></div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Risk Questionnaire</h2>
+
+                    <!--
+                        This form collects the investor profile inputs.
+                        The frontend only collects and validates the input. It does NOT calculate the final
+                        risk score or risk profile; those are calculated by the backend assistant services.
+                        The form submit event is handled in portfolio-investor-profile.js.
+                    -->
+                    <form id="investorProfileForm" class="row g-3" novalidate>
+                        <div class="col-md-6">
+                            <label for="age" class="form-label">Age</label>
+                            <!--
+                                Age is a numeric input used by backend risk assessment.
+                                HTML allows up to 144, but JavaScript validation currently restricts saved age to 18-100.
+                            -->
+                            <input id="age" type="number" min="18" max="144" class="form-control" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="investmentHorizonYears" class="form-label">Investment Horizon (years)</label>
+                            <!-- Investment horizon is sent to the backend as investmentHorizonYears. -->
+                            <input id="investmentHorizonYears" type="number" min="1" max="60" class="form-control" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="riskTolerance" class="form-label">
+                                Risk Tolerance
+                                <!--
+                                    This "?" is a Bootstrap popover.
+                                    To change the help wording, edit data-bs-content below.
+                                    This only changes user guidance; it does not change backend risk scoring.
+                                -->
+                                <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm rounded-circle help-popover-button ms-1"
+                                        data-bs-toggle="popover"
+                                        data-bs-trigger="hover focus click"
+                                        data-bs-html="true"
+                                        data-bs-title="Risk Tolerance"
+                                        data-bs-content="Risk tolerance describes how comfortable you are with portfolio ups and downs.&lt;br&gt;&lt;br&gt;&lt;strong&gt;Low:&lt;/strong&gt; You prefer avoiding large losses, even if growth is lower.&lt;br&gt;&lt;strong&gt;Medium:&lt;/strong&gt; You accept some fluctuation for moderate growth.&lt;br&gt;&lt;strong&gt;High:&lt;/strong&gt; You accept larger short-term changes for higher potential growth.&lt;br&gt;&lt;strong&gt;Very high:&lt;/strong&gt; You are comfortable with substantial volatility in pursuit of aggressive growth."
+                                        aria-label="Explain risk tolerance">
+                                    ?
+                                </button>
+                            </label>
+                            <!--
+                                The option labels are user-facing text.
+                                The option values (LOW, MEDIUM, HIGH, VERY_HIGH) must match backend enum values.
+                                Changing labels is safe; changing values requires backend enum/API changes too.
+                            -->
+                            <select id="riskTolerance" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="VERY_HIGH">Very high</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="investmentExperience" class="form-label">
+                                Investment Experience
+                                <!--
+                                    Investment Experience help text is defined here.
+                                    It was made more concrete by using approximate experience ranges.
+                                -->
+                                <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm rounded-circle help-popover-button ms-1"
+                                        data-bs-toggle="popover"
+                                        data-bs-trigger="hover focus click"
+                                        data-bs-html="true"
+                                        data-bs-title="Investment Experience"
+                                        data-bs-content="Investment experience describes how much practical investing experience and investment knowledge you have.&lt;br&gt;&lt;br&gt;&lt;strong&gt;Beginner:&lt;/strong&gt; Around 0-1 years of investing experience, or still learning basic ideas such as risk, diversification and market movements.&lt;br&gt;&lt;strong&gt;Intermediate:&lt;/strong&gt; Around 1-3 years of investing experience, with an understanding of basic portfolio concepts such as diversification, volatility and risk versus return.&lt;br&gt;&lt;strong&gt;Advanced:&lt;/strong&gt; Around 3+ years of investing experience, and comfortable interpreting portfolio metrics, benchmark comparison and market risk."
+                                        aria-label="Explain investment experience">
+                                    ?
+                                </button>
+                            </label>
+                            <!-- Values must match InvestmentExperienceLevel backend enum values. -->
+                            <select id="investmentExperience" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="BEGINNER">Beginner</option>
+                                <option value="INTERMEDIATE">Intermediate</option>
+                                <option value="ADVANCED">Advanced</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="incomeStability" class="form-label">
+                                Income Stability
+                                <!--
+                                    Income Stability help text is defined here.
+                                    This is an educational approximation of risk capacity, not formal financial advice.
+                                -->
+                                <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm rounded-circle help-popover-button ms-1"
+                                        data-bs-toggle="popover"
+                                        data-bs-trigger="hover focus click"
+                                        data-bs-html="true"
+                                        data-bs-title="Income Stability"
+                                        data-bs-content="Income stability describes how predictable your income is. More stable income may allow a user to tolerate more investment fluctuation, while unstable income may require a more cautious profile.&lt;br&gt;&lt;br&gt;&lt;strong&gt;Low:&lt;/strong&gt; Income is irregular or uncertain, such as freelance, temporary, unemployed or month-to-month variable income.&lt;br&gt;&lt;strong&gt;Medium:&lt;/strong&gt; Income is generally steady but may include variable elements, such as commission, overtime, temporary contract risk or occasional changes.&lt;br&gt;&lt;strong&gt;High:&lt;/strong&gt; Income is regular and predictable, such as a stable salary or long-term income with consistent monthly payments."
+                                        aria-label="Explain income stability">
+                                    ?
+                                </button>
+                            </label>
+                            <!-- Values must match IncomeStabilityLevel backend enum values. -->
+                            <select id="incomeStability" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="investmentGoal" class="form-label">
+                                Investment Goal
+                                <!--
+                                    Investment Goal help text is defined here.
+                                    The visible label "Stable Income" maps to backend value BALANCED_GROWTH.
+                                    Do not change option values unless the backend enum and DTO mapping are updated too.
+                                -->
+                                <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm rounded-circle help-popover-button ms-1"
+                                        data-bs-toggle="popover"
+                                        data-bs-trigger="hover focus click"
+                                        data-bs-html="true"
+                                        data-bs-title="Investment Goal"
+                                        data-bs-content="Investment goal describes the main purpose of the portfolio. It helps the assistant understand whether the user prioritises capital protection, steadier income, retirement planning or long-term growth.&lt;br&gt;&lt;br&gt;&lt;strong&gt;Avoid Losses:&lt;/strong&gt; Focus on preserving capital and reducing the chance of large portfolio losses. Suitable when protecting existing money is more important than high growth.&lt;br&gt;&lt;strong&gt;Stable Income:&lt;/strong&gt; Focus on steadier returns or income-like investments, such as dividends or bonds, with moderate risk. Suitable when regular or more predictable returns are preferred over maximum growth.&lt;br&gt;&lt;strong&gt;Retirement:&lt;/strong&gt; Focus on building or preserving money for retirement. Usually suitable for a long-term horizon, such as 10+ years, unless the user is already close to retirement.&lt;br&gt;&lt;strong&gt;Long-term growth:&lt;/strong&gt; Focus on growing wealth over a long period, such as 5-10+ years, while accepting short-term portfolio fluctuations."
+                                        aria-label="Explain investment goal">
+                                    ?
+                                </button>
+                            </label>
+                            <!--
+                                The text users see can be changed independently from the value.
+                                The value is what JavaScript sends to /api/portfolio/investor-profile.
+                            -->
+                            <select id="investmentGoal" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="CAPITAL_PRESERVATION">Avoid Losses</option>
+                                <option value="BALANCED_GROWTH">Stable Income</option>
+                                <option value="RETIREMENT">Retirement</option>
+                                <option value="LONG_TERM_GROWTH">Long-term growth</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 d-flex gap-2">
+                            <!--
+                                Save Profile is styled with Bootstrap btn-primary.
+                                If asked to change button colour, change this class, e.g. btn-primary -> btn-success,
+                                or add a custom CSS class.
+                            -->
+                            <button id="saveProfileButton" type="submit" class="btn btn-primary">Save Profile</button>
+                            <!-- Normal link back to the overview page; no JavaScript is needed for this navigation. -->
+                            <a href="/portfolio/overview" class="btn btn-outline-secondary">Back to Overview</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Current Profile</h2>
+                    <!--
+                        These three states are switched by JavaScript:
+                        loadingState = profile is being fetched;
+                        emptyState = GET returned 404, meaning no profile exists yet;
+                        profileSummary = saved profile exists and should be displayed.
+                    -->
+                    <div id="loadingState" class="text-muted">Loading profile...</div>
+                    <div id="emptyState" class="alert alert-info d-none">
+                        No investor profile has been created yet.
+                    </div>
+                    <div id="profileSummary" class="d-none">
+                        <dl class="row mb-0">
+                            <!--
+                                JavaScript fills these <dd> elements after loading/saving the profile.
+                                The risk profile and risk score come from backend calculation, not from frontend calculation.
+                            -->
+                            <dt class="col-sm-5">Risk profile</dt>
+                            <dd id="summaryRiskProfile" class="col-sm-7">-</dd>
+
+                            <dt class="col-sm-5">Risk score</dt>
+                            <dd id="summaryRiskScore" class="col-sm-7">-</dd>
+
+                            <dt class="col-sm-5">Age</dt>
+                            <dd id="summaryAge" class="col-sm-7">-</dd>
+
+                            <dt class="col-sm-5">Horizon</dt>
+                            <dd id="summaryHorizon" class="col-sm-7">-</dd>
+
+                            <dt class="col-sm-5">Risk tolerance</dt>
+                            <dd id="summaryRiskTolerance" class="col-sm-7">-</dd>
+
+                            <dt class="col-sm-5">Experience</dt>
+                            <dd id="summaryExperience" class="col-sm-7">-</dd>
+
+                            <dt class="col-sm-5">Income stability</dt>
+                            <dd id="summaryIncomeStability" class="col-sm-7">-</dd>
+
+                            <dt class="col-sm-5">Goal</dt>
+                            <dd id="summaryGoal" class="col-sm-7">-</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        /*
+            This activates all Bootstrap popovers after the page loads.
+            Without this script, the "?" buttons would appear but no hover/click explanation would open.
+        */
+        document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (triggerElement) {
+            new bootstrap.Popover(triggerElement, {
+                container: 'body'
+            });
+        });
+    });
+</script>
+<!-- Page-specific JavaScript for loading, saving, validating and rendering investor profile data. -->
+<script th:src="@{/js/portfolio-investor-profile.js}"></script>
+</body>
+</html>

@@ -1,0 +1,702 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AlphaVantageMarketDataProvider</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.integration.marketdata</a>
+</div>
+
+<h1>Coverage Summary for Class: AlphaVantageMarketDataProvider (com.tsh11.fypcode.integration.marketdata)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AlphaVantageMarketDataProvider</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/30)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/182)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/285)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.integration.marketdata;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetClass;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetType;
+&nbsp;import com.tsh11.fypcode.domain.asset.DataSourceType;
+&nbsp;import com.tsh11.fypcode.dto.response.AssetSearchResultResponse;
+&nbsp;import org.springframework.beans.factory.annotation.Value;
+&nbsp;import org.springframework.cache.annotation.Cacheable;
+&nbsp;import org.springframework.context.annotation.Primary;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;import org.springframework.web.client.RestClient;
+&nbsp;import org.springframework.cache.annotation.Cacheable;
+&nbsp;import tools.jackson.databind.JsonNode;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.time.LocalDate;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.LinkedHashMap;
+&nbsp;import java.util.LinkedHashSet;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Component
+&nbsp;@Primary
+&nbsp;public class AlphaVantageMarketDataProvider implements MarketDataProvider {
+&nbsp;
+&nbsp;    private static final int MAX_BULK_SYMBOLS = 100;
+&nbsp;
+&nbsp;    private final RestClient restClient;
+&nbsp;    private final String apiKey;
+&nbsp;    private final AlphaVantageBulkQuote alphaVantageBulkQuote;
+&nbsp;
+&nbsp;    public AlphaVantageMarketDataProvider(
+&nbsp;            RestClient.Builder builder,
+&nbsp;            @Value(&quot;${marketdata.alphavantage.base-url}&quot;) String baseUrl,
+&nbsp;            @Value(&quot;${marketdata.alphavantage.api-key}&quot;) String apiKey,
+&nbsp;            AlphaVantageBulkQuote alphaVantageBulkQuote
+<b class="nc">&nbsp;    ) {</b>
+<b class="nc">&nbsp;        this.restClient = builder.baseUrl(baseUrl).build();</b>
+<b class="nc">&nbsp;        this.apiKey = apiKey;</b>
+<b class="nc">&nbsp;        this.alphaVantageBulkQuote = alphaVantageBulkQuote;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Cacheable(
+&nbsp;            value = &quot;latestPrice&quot;,
+&nbsp;            key = &quot;(#symbol == null ? &#39;&#39; : #symbol.trim().toUpperCase())&quot;,
+&nbsp;            sync = true
+&nbsp;    )
+&nbsp;    public BigDecimal getLatestPrice(String symbol) {
+<b class="nc">&nbsp;        String normalizedSymbol = normalizeSymbol(symbol);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode root = restClient.get()</b>
+<b class="nc">&nbsp;                .uri(uriBuilder -&gt; uriBuilder</b>
+<b class="nc">&nbsp;                        .path(&quot;/query&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;function&quot;, &quot;GLOBAL_QUOTE&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;symbol&quot;, normalizedSymbol)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;apikey&quot;, apiKey)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .retrieve()</b>
+<b class="nc">&nbsp;                .body(JsonNode.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        validateAlphaVantageResponse(root);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode globalQuote = root.path(&quot;Global Quote&quot;);</b>
+<b class="nc">&nbsp;        if (globalQuote.isMissingNode() || globalQuote.isEmpty()) {</b>
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        System.out.println(&quot;SINGLE QUOTE REQUEST: &quot; + normalizedSymbol);</b>
+<b class="nc">&nbsp;        return parseBigDecimalOrZero(globalQuote.path(&quot;05. price&quot;).asText(null));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Map&lt;String, BigDecimal&gt; getLatestPrices(List&lt;String&gt; symbols) {
+<b class="nc">&nbsp;        List&lt;String&gt; normalizedSymbols = normalizeSymbols(symbols);</b>
+<b class="nc">&nbsp;        if (normalizedSymbols.isEmpty()) {</b>
+<b class="nc">&nbsp;            return Map.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;String, BigDecimal&gt; result = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (int start = 0; start &lt; normalizedSymbols.size(); start += MAX_BULK_SYMBOLS) {</b>
+<b class="nc">&nbsp;            int end = Math.min(start + MAX_BULK_SYMBOLS, normalizedSymbols.size());</b>
+<b class="nc">&nbsp;            List&lt;String&gt; batch = normalizedSymbols.subList(start, end);</b>
+&nbsp;
+&nbsp;            try {
+<b class="nc">&nbsp;                Map&lt;String, BigDecimal&gt; batchPrices =</b>
+<b class="nc">&nbsp;                        alphaVantageBulkQuote.getLatestPricesForBatch(buildBatchCacheKey(batch), batch);</b>
+&nbsp;
+<b class="nc">&nbsp;                for (Map.Entry&lt;String, BigDecimal&gt; entry : batchPrices.entrySet()) {</b>
+<b class="nc">&nbsp;                    String symbol = normalizeSymbol(entry.getKey());</b>
+<b class="nc">&nbsp;                    BigDecimal price = entry.getValue();</b>
+&nbsp;
+<b class="nc">&nbsp;                    if (price != null &amp;&amp; price.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="nc">&nbsp;                        result.put(symbol, price);</b>
+&nbsp;                    }
+&nbsp;                }
+&nbsp;            } catch (Exception ex) {
+<b class="nc">&nbsp;                System.out.println(&quot;BULK QUOTE FAILED: &quot; + ex.getMessage());</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+&nbsp;        /*
+&nbsp;         * Controlled fallback:
+&nbsp;         * If the bulk endpoint returns only partial data or artificial/sample data,
+&nbsp;         * fetch missing symbols one by one using GLOBAL_QUOTE.
+&nbsp;         *
+&nbsp;         * This is deliberately throttled to avoid reintroducing Alpha Vantage burst errors.
+&nbsp;         */
+<b class="nc">&nbsp;        for (String symbol : normalizedSymbols) {</b>
+<b class="nc">&nbsp;            if (result.containsKey(symbol)) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+&nbsp;            try {
+<b class="nc">&nbsp;                sleepBeforeSingleQuoteFallback();</b>
+&nbsp;
+<b class="nc">&nbsp;                BigDecimal fallbackPrice = getLatestPrice(symbol);</b>
+&nbsp;
+<b class="nc">&nbsp;                if (fallbackPrice != null &amp;&amp; fallbackPrice.compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="nc">&nbsp;                    result.put(symbol, fallbackPrice);</b>
+&nbsp;                } else {
+<b class="nc">&nbsp;                    result.put(symbol, BigDecimal.ZERO);</b>
+&nbsp;                }
+&nbsp;            } catch (Exception ex) {
+<b class="nc">&nbsp;                System.out.println(&quot;SINGLE QUOTE FALLBACK FAILED for &quot; + symbol + &quot;: &quot; + ex.getMessage());</b>
+<b class="nc">&nbsp;                result.put(symbol, BigDecimal.ZERO);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        System.out.println(&quot;LATEST PRICE MAP -&gt; &quot; + result);</b>
+&nbsp;
+<b class="nc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Cacheable(
+&nbsp;            value = &quot;historicalPrice&quot;,
+&nbsp;            key = &quot;(#symbol == null ? &#39;&#39; : #symbol.trim().toUpperCase()) + &#39;_&#39; + #from + &#39;_&#39; + #to&quot;
+&nbsp;    )
+&nbsp;    public List&lt;HistoricalPricePoint&gt; getHistoricalPrices(String symbol, LocalDate from, LocalDate to) {
+<b class="nc">&nbsp;        String normalizedSymbol = normalizeSymbol(symbol);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode root = restClient.get()</b>
+<b class="nc">&nbsp;                .uri(uriBuilder -&gt; uriBuilder</b>
+<b class="nc">&nbsp;                        .path(&quot;/query&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;function&quot;, &quot;TIME_SERIES_DAILY_ADJUSTED&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;symbol&quot;, normalizedSymbol)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;outputsize&quot;, &quot;full&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;apikey&quot;, apiKey)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .retrieve()</b>
+<b class="nc">&nbsp;                .body(JsonNode.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        validateAlphaVantageResponse(root);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode series = root.path(&quot;Time Series (Daily)&quot;);</b>
+<b class="nc">&nbsp;        if (series.isMissingNode() || !series.isObject()) {</b>
+<b class="nc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        List&lt;HistoricalPricePoint&gt; result = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (Map.Entry&lt;String, JsonNode&gt; entry : series.properties()) {</b>
+<b class="nc">&nbsp;            LocalDate date = LocalDate.parse(entry.getKey());</b>
+<b class="nc">&nbsp;            if (date.isBefore(from) || date.isAfter(to)) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            JsonNode dailyNode = entry.getValue();</b>
+<b class="nc">&nbsp;            BigDecimal adjustedClose = parseBigDecimalOrZero(dailyNode.path(&quot;5. adjusted close&quot;).asText(null));</b>
+<b class="nc">&nbsp;            result.add(new HistoricalPricePoint(date, adjustedClose));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        result.sort((a, b) -&gt; a.getDate().compareTo(b.getDate()));</b>
+<b class="nc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Cacheable(
+&nbsp;            value = &quot;historicalIndexPrice&quot;,
+&nbsp;            key = &quot;(#symbol == null ? &#39;&#39; : #symbol.trim().toUpperCase()) + &#39;_&#39; + #from + &#39;_&#39; + #to&quot;
+&nbsp;    )
+&nbsp;    public List&lt;HistoricalPricePoint&gt; getHistoricalIndexPrices(String symbol, LocalDate from, LocalDate to) {
+<b class="nc">&nbsp;        String normalizedSymbol = normalizeSymbol(symbol);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode root = restClient.get()</b>
+<b class="nc">&nbsp;                .uri(uriBuilder -&gt; uriBuilder</b>
+<b class="nc">&nbsp;                        .path(&quot;/query&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;function&quot;, &quot;INDEX_DATA&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;symbol&quot;, normalizedSymbol)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;interval&quot;, &quot;daily&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;apikey&quot;, apiKey)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .retrieve()</b>
+<b class="nc">&nbsp;                .body(JsonNode.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        validateAlphaVantageResponse(root);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode data = root.path(&quot;data&quot;);</b>
+<b class="nc">&nbsp;        if (data.isMissingNode() || !data.isArray()) {</b>
+<b class="nc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        List&lt;HistoricalPricePoint&gt; result = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (JsonNode node : data) {</b>
+<b class="nc">&nbsp;            LocalDate date = LocalDate.parse(node.path(&quot;date&quot;).asText());</b>
+<b class="nc">&nbsp;            if (date.isBefore(from) || date.isAfter(to)) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            BigDecimal close = parseBigDecimalOrZero(node.path(&quot;close&quot;).asText(null));</b>
+<b class="nc">&nbsp;            result.add(new HistoricalPricePoint(date, close));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        result.sort((a, b) -&gt; a.getDate().compareTo(b.getDate()));</b>
+<b class="nc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Cacheable(
+&nbsp;            value = &quot;assetSearch&quot;,
+&nbsp;            key = &quot;(#query == null ? &#39;&#39; : #query.trim().toUpperCase())&quot;
+&nbsp;    )
+&nbsp;    public List&lt;AssetSearchResultResponse&gt; searchAssets(String query) {
+<b class="nc">&nbsp;        if (query == null || query.isBlank()) {</b>
+<b class="nc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        JsonNode root = restClient.get()</b>
+<b class="nc">&nbsp;                .uri(uriBuilder -&gt; uriBuilder</b>
+<b class="nc">&nbsp;                        .path(&quot;/query&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;function&quot;, &quot;SYMBOL_SEARCH&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;keywords&quot;, query.trim())</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;apikey&quot;, apiKey)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .retrieve()</b>
+<b class="nc">&nbsp;                .body(JsonNode.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        validateAlphaVantageResponse(root);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode matches = root.path(&quot;bestMatches&quot;);</b>
+<b class="nc">&nbsp;        if (matches.isMissingNode() || !matches.isArray()) {</b>
+<b class="nc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        List&lt;AssetSearchResultResponse&gt; results = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (JsonNode match : matches) {</b>
+<b class="nc">&nbsp;            String symbol = safeText(match.path(&quot;1. symbol&quot;).asText(null));</b>
+<b class="nc">&nbsp;            String displayName = safeText(match.path(&quot;2. name&quot;).asText(null));</b>
+<b class="nc">&nbsp;            String providerType = safeText(match.path(&quot;3. type&quot;).asText(null));</b>
+&nbsp;
+<b class="nc">&nbsp;            if (symbol == null || displayName == null) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            AssetSearchResultResponse item = new AssetSearchResultResponse();</b>
+<b class="nc">&nbsp;            item.setSymbol(symbol);</b>
+<b class="nc">&nbsp;            item.setDisplayName(displayName);</b>
+<b class="nc">&nbsp;            item.setAssetType(mapSearchAssetType(providerType, symbol));</b>
+<b class="nc">&nbsp;            item.setMarket(safeText(match.path(&quot;4. region&quot;).asText(null)));</b>
+<b class="nc">&nbsp;            item.setCurrency(safeText(match.path(&quot;8. currency&quot;).asText(null)));</b>
+<b class="nc">&nbsp;            item.setMatchScore(safeText(match.path(&quot;9. matchScore&quot;).asText(null)));</b>
+&nbsp;
+<b class="nc">&nbsp;            results.add(item);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return results;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Cacheable(
+&nbsp;            value = &quot;assetMetadata&quot;,
+&nbsp;            key = &quot;(#symbol == null ? &#39;&#39; : #symbol.trim().toUpperCase())&quot;
+&nbsp;    )
+&nbsp;    public Optional&lt;AssetMetadata&gt; getAssetMetadata(String symbol) {
+<b class="nc">&nbsp;        String normalizedSymbol = normalizeSymbol(symbol);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode searchRoot = restClient.get()</b>
+<b class="nc">&nbsp;                .uri(uriBuilder -&gt; uriBuilder</b>
+<b class="nc">&nbsp;                        .path(&quot;/query&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;function&quot;, &quot;SYMBOL_SEARCH&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;keywords&quot;, normalizedSymbol)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;apikey&quot;, apiKey)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .retrieve()</b>
+<b class="nc">&nbsp;                .body(JsonNode.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        validateAlphaVantageResponse(searchRoot);</b>
+&nbsp;
+<b class="nc">&nbsp;        JsonNode matches = searchRoot.path(&quot;bestMatches&quot;);</b>
+<b class="nc">&nbsp;        if (matches.isMissingNode() || !matches.isArray() || matches.isEmpty()) {</b>
+<b class="nc">&nbsp;            return Optional.empty();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        JsonNode selectedMatch = findBestMatch(matches, normalizedSymbol);</b>
+&nbsp;
+<b class="nc">&nbsp;        String matchedSymbol = normalizeSymbol(selectedMatch.path(&quot;1. symbol&quot;).asText(null));</b>
+<b class="nc">&nbsp;        String providerType = safeText(selectedMatch.path(&quot;3. type&quot;).asText(null));</b>
+<b class="nc">&nbsp;        String region = safeText(selectedMatch.path(&quot;4. region&quot;).asText(null));</b>
+<b class="nc">&nbsp;        String currency = safeText(selectedMatch.path(&quot;8. currency&quot;).asText(null));</b>
+<b class="nc">&nbsp;        String displayName = safeText(selectedMatch.path(&quot;2. name&quot;).asText(null));</b>
+&nbsp;
+<b class="nc">&nbsp;        AssetMetadata metadata = new AssetMetadata();</b>
+<b class="nc">&nbsp;        metadata.setSymbol(matchedSymbol);</b>
+<b class="nc">&nbsp;        metadata.setDisplayName(displayName != null ? displayName : matchedSymbol);</b>
+<b class="nc">&nbsp;        metadata.setProviderAssetType(providerType);</b>
+<b class="nc">&nbsp;        metadata.setAssetClass(mapAssetClass(providerType, matchedSymbol));</b>
+<b class="nc">&nbsp;        metadata.setMarket(region);</b>
+<b class="nc">&nbsp;        metadata.setCurrency(currency);</b>
+<b class="nc">&nbsp;        metadata.setDataSource(DataSourceType.ALPHA_VANTAGE);</b>
+&nbsp;
+<b class="nc">&nbsp;        applyInitialCapabilities(metadata);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (metadata.getAssetClass() == AssetClass.ETF) {</b>
+<b class="nc">&nbsp;            enrichFromEtfProfile(metadata);</b>
+<b class="nc">&nbsp;        } else if (metadata.getAssetClass() == AssetClass.EQUITY</b>
+<b class="nc">&nbsp;                || metadata.getAssetClass() == AssetClass.BOND</b>
+<b class="nc">&nbsp;                || metadata.getAssetClass() == AssetClass.OTHER) {</b>
+<b class="nc">&nbsp;            enrichFromOverview(metadata);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (metadata.getAssetClass() == null) {</b>
+<b class="nc">&nbsp;            metadata.setAssetClass(AssetClass.OTHER);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        applyInitialCapabilities(metadata);</b>
+&nbsp;
+<b class="nc">&nbsp;        return Optional.of(metadata);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private JsonNode findBestMatch(JsonNode matches, String normalizedSymbol) {
+<b class="nc">&nbsp;        for (JsonNode match : matches) {</b>
+<b class="nc">&nbsp;            String matchSymbol = safeText(match.path(&quot;1. symbol&quot;).asText(null));</b>
+<b class="nc">&nbsp;            if (normalizedSymbol.equalsIgnoreCase(matchSymbol)) {</b>
+<b class="nc">&nbsp;                return match;</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return matches.get(0);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void enrichFromOverview(AssetMetadata metadata) {
+<b class="nc">&nbsp;        JsonNode root = restClient.get()</b>
+<b class="nc">&nbsp;                .uri(uriBuilder -&gt; uriBuilder</b>
+<b class="nc">&nbsp;                        .path(&quot;/query&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;function&quot;, &quot;OVERVIEW&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;symbol&quot;, metadata.getSymbol())</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;apikey&quot;, apiKey)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .retrieve()</b>
+<b class="nc">&nbsp;                .body(JsonNode.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        validateAlphaVantageResponse(root);</b>
+&nbsp;
+<b class="nc">&nbsp;        String overviewAssetType = safeText(root.path(&quot;AssetType&quot;).asText(null));</b>
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getProviderAssetType()) &amp;&amp; !isBlank(overviewAssetType)) {</b>
+<b class="nc">&nbsp;            metadata.setProviderAssetType(overviewAssetType);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getDisplayName())) {</b>
+<b class="nc">&nbsp;            metadata.setDisplayName(safeText(root.path(&quot;Name&quot;).asText(null)));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (metadata.getAssetClass() == AssetClass.OTHER &amp;&amp; !isBlank(overviewAssetType)) {</b>
+<b class="nc">&nbsp;            metadata.setAssetClass(mapAssetClass(overviewAssetType, metadata.getSymbol()));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getSector())) {</b>
+<b class="nc">&nbsp;            metadata.setSector(safeText(root.path(&quot;Sector&quot;).asText(null)));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getMarket())) {</b>
+<b class="nc">&nbsp;            metadata.setMarket(safeText(root.path(&quot;Exchange&quot;).asText(null)));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getCurrency())) {</b>
+<b class="nc">&nbsp;            metadata.setCurrency(safeText(root.path(&quot;Currency&quot;).asText(null)));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void enrichFromEtfProfile(AssetMetadata metadata) {
+<b class="nc">&nbsp;        JsonNode root = restClient.get()</b>
+<b class="nc">&nbsp;                .uri(uriBuilder -&gt; uriBuilder</b>
+<b class="nc">&nbsp;                        .path(&quot;/query&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;function&quot;, &quot;ETF_PROFILE&quot;)</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;symbol&quot;, metadata.getSymbol())</b>
+<b class="nc">&nbsp;                        .queryParam(&quot;apikey&quot;, apiKey)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .retrieve()</b>
+<b class="nc">&nbsp;                .body(JsonNode.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        validateAlphaVantageResponse(root);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getDisplayName())) {</b>
+<b class="nc">&nbsp;            metadata.setDisplayName(safeText(root.path(&quot;name&quot;).asText(null)));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getCurrency())) {</b>
+<b class="nc">&nbsp;            metadata.setCurrency(safeText(root.path(&quot;currency&quot;).asText(null)));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getMarket())) {</b>
+<b class="nc">&nbsp;            metadata.setMarket(safeText(root.path(&quot;exchange&quot;).asText(null)));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isBlank(metadata.getSector())) {</b>
+<b class="nc">&nbsp;            metadata.setSector(&quot;UNCLASSIFIED&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        metadata.setProviderAssetType(</b>
+<b class="nc">&nbsp;                isBlank(metadata.getProviderAssetType()) ? &quot;ETF&quot; : metadata.getProviderAssetType()</b>
+&nbsp;        );
+<b class="nc">&nbsp;        metadata.setAssetClass(AssetClass.ETF);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void applyInitialCapabilities(AssetMetadata metadata) {
+<b class="nc">&nbsp;        AssetClass assetClass = metadata.getAssetClass();</b>
+&nbsp;
+<b class="nc">&nbsp;        boolean externallyPriced = assetClass == AssetClass.EQUITY</b>
+&nbsp;                || assetClass == AssetClass.ETF
+&nbsp;                || assetClass == AssetClass.BOND
+&nbsp;                || assetClass == AssetClass.CRYPTO;
+&nbsp;
+<b class="nc">&nbsp;        boolean historicalCandidate = assetClass == AssetClass.EQUITY</b>
+&nbsp;                || assetClass == AssetClass.ETF
+&nbsp;                || assetClass == AssetClass.BOND;
+&nbsp;
+<b class="nc">&nbsp;        metadata.setManualValuationRequired(!externallyPriced);</b>
+<b class="nc">&nbsp;        metadata.setPriceDataSupported(externallyPriced);</b>
+<b class="nc">&nbsp;        metadata.setQuoteSupported(externallyPriced);</b>
+<b class="nc">&nbsp;        metadata.setHistoricalPriceSupported(historicalCandidate);</b>
+<b class="nc">&nbsp;        metadata.setOptimisationSupported(historicalCandidate);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private AssetClass mapAssetClass(String providerType, String symbol) {
+<b class="nc">&nbsp;        String normalized = providerType == null ? &quot;&quot; : providerType.trim().toUpperCase();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;ETF&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetClass.ETF;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;FUND&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetClass.ETF;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;BOND&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetClass.BOND;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;EQUITY&quot;)</b>
+<b class="nc">&nbsp;                || normalized.contains(&quot;STOCK&quot;)</b>
+<b class="nc">&nbsp;                || normalized.contains(&quot;SHARE&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetClass.EQUITY;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (looksLikeMarketSymbol(symbol)) {</b>
+<b class="nc">&nbsp;            return AssetClass.EQUITY;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return AssetClass.OTHER;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private AssetType mapSearchAssetType(String providerType, String symbol) {
+<b class="nc">&nbsp;        String normalized = providerType == null ? &quot;&quot; : providerType.trim().toUpperCase();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;ETF&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetType.ETF;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;FUND&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetType.ETF;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;BOND&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetType.BOND;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (normalized.contains(&quot;EQUITY&quot;)</b>
+<b class="nc">&nbsp;                || normalized.contains(&quot;STOCK&quot;)</b>
+<b class="nc">&nbsp;                || normalized.contains(&quot;SHARE&quot;)) {</b>
+<b class="nc">&nbsp;            return AssetType.EQUITY;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (looksLikeMarketSymbol(symbol)) {</b>
+<b class="nc">&nbsp;            return AssetType.EQUITY;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return AssetType.OTHER_MANUAL;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean looksLikeMarketSymbol(String symbol) {
+<b class="nc">&nbsp;        return symbol != null</b>
+<b class="nc">&nbsp;                &amp;&amp; !symbol.isBlank()</b>
+<b class="nc">&nbsp;                &amp;&amp; symbol.trim().toUpperCase().matches(&quot;^[A-Z0-9.\\-]+$&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;String&gt; normalizeSymbols(List&lt;String&gt; symbols) {
+<b class="nc">&nbsp;        if (symbols == null) {</b>
+<b class="nc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return symbols.stream()</b>
+<b class="nc">&nbsp;                .filter(symbol -&gt; symbol != null &amp;&amp; !symbol.isBlank())</b>
+<b class="nc">&nbsp;                .map(this::normalizeSymbol)</b>
+<b class="nc">&nbsp;                .collect(Collectors.collectingAndThen(</b>
+<b class="nc">&nbsp;                        Collectors.toCollection(LinkedHashSet::new),</b>
+&nbsp;                        ArrayList::new
+&nbsp;                ));
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildBatchCacheKey(List&lt;String&gt; symbols) {
+<b class="nc">&nbsp;        return symbols.stream()</b>
+<b class="nc">&nbsp;                .sorted()</b>
+<b class="nc">&nbsp;                .collect(Collectors.joining(&quot;,&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String latestPriceBatchCacheKey(List&lt;String&gt; symbols) {
+<b class="nc">&nbsp;        List&lt;String&gt; normalizedSymbols = normalizeSymbols(symbols);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (normalizedSymbols.isEmpty()) {</b>
+<b class="nc">&nbsp;            return &quot;EMPTY&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return buildBatchCacheKey(normalizedSymbols);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateAlphaVantageResponse(JsonNode root) {
+<b class="nc">&nbsp;        if (root == null) {</b>
+<b class="nc">&nbsp;            throw new IllegalStateException(&quot;Alpha Vantage returned an empty response&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (root.has(&quot;Error Message&quot;)) {</b>
+<b class="nc">&nbsp;            throw new IllegalStateException(root.path(&quot;Error Message&quot;).asText(&quot;Alpha Vantage returned an error&quot;));</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (root.has(&quot;Note&quot;)) {</b>
+<b class="nc">&nbsp;            throw new IllegalStateException(root.path(&quot;Note&quot;).asText(&quot;Alpha Vantage request limit reached&quot;));</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (root.has(&quot;Information&quot;)) {</b>
+<b class="nc">&nbsp;            throw new IllegalStateException(root.path(&quot;Information&quot;).asText(&quot;Alpha Vantage informational response&quot;));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal parseBigDecimalOrZero(String value) {
+<b class="nc">&nbsp;        if (value == null || value.isBlank()) {</b>
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            return new BigDecimal(value);</b>
+&nbsp;        } catch (NumberFormatException ex) {
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String normalizeSymbol(String symbol) {
+<b class="nc">&nbsp;        if (symbol == null || symbol.isBlank()) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Symbol must not be blank&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return symbol.trim().toUpperCase();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String safeText(String value) {
+<b class="nc">&nbsp;        if (value == null || value.isBlank()) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return value.trim();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean isBlank(String value) {
+<b class="nc">&nbsp;        return value == null || value.isBlank();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void sleepBeforeSingleQuoteFallback() {
+&nbsp;        try {
+<b class="nc">&nbsp;            Thread.sleep(250);</b>
+&nbsp;        } catch (InterruptedException ex) {
+<b class="nc">&nbsp;            Thread.currentThread().interrupt();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,157 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AssetSearchController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: AssetSearchController (com.tsh11.fypcode.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AssetSearchController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (16/16)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.controller;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.dto.response.AssetSearchResultResponse;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.MarketDataProvider;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.AssetMetadata;
+&nbsp;import com.tsh11.fypcode.dto.response.AssetMetadataResponse;
+&nbsp;
+&nbsp;import org.springframework.web.bind.annotation.GetMapping;
+&nbsp;import org.springframework.web.bind.annotation.RequestMapping;
+&nbsp;import org.springframework.web.bind.annotation.RequestParam;
+&nbsp;import org.springframework.web.bind.annotation.RestController;
+&nbsp;import org.springframework.http.HttpStatus;
+&nbsp;import org.springframework.web.server.ResponseStatusException;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/assets&quot;)
+&nbsp;public class AssetSearchController {
+&nbsp;
+&nbsp;    private final MarketDataProvider marketDataProvider;
+&nbsp;
+<b class="fc">&nbsp;    public AssetSearchController(MarketDataProvider marketDataProvider) {</b>
+<b class="fc">&nbsp;        this.marketDataProvider = marketDataProvider;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/search&quot;)
+&nbsp;    public List&lt;AssetSearchResultResponse&gt; search(@RequestParam String query) {
+<b class="fc">&nbsp;        return marketDataProvider.searchAssets(query);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/metadata&quot;)
+&nbsp;    public AssetMetadataResponse metadata(@RequestParam String symbol) {
+<b class="fc">&nbsp;        AssetMetadata metadata = marketDataProvider.getAssetMetadata(symbol)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new ResponseStatusException(</b>
+&nbsp;                        HttpStatus.NOT_FOUND,
+&nbsp;                        &quot;Asset metadata not found for symbol: &quot; + symbol
+&nbsp;                ));
+&nbsp;
+<b class="fc">&nbsp;        AssetMetadataResponse response = new AssetMetadataResponse();</b>
+<b class="fc">&nbsp;        response.setSymbol(metadata.getSymbol());</b>
+<b class="fc">&nbsp;        response.setDisplayName(metadata.getDisplayName());</b>
+<b class="fc">&nbsp;        response.setAssetClass(metadata.getAssetClass());</b>
+<b class="fc">&nbsp;        response.setSector(metadata.getSector());</b>
+<b class="fc">&nbsp;        response.setMarket(metadata.getMarket());</b>
+<b class="fc">&nbsp;        response.setCurrency(metadata.getCurrency());</b>
+<b class="fc">&nbsp;        response.setManualValuationRequired(metadata.isManualValuationRequired());</b>
+<b class="fc">&nbsp;        response.setPriceDataSupported(metadata.isPriceDataSupported());</b>
+<b class="fc">&nbsp;        response.setDataSource(metadata.getDataSource());</b>
+&nbsp;
+<b class="fc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

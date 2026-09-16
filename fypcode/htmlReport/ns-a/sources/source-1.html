@@ -1,0 +1,224 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ActivityResponse</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.response</a>
+</div>
+
+<h1>Coverage Summary for Class: ActivityResponse (com.tsh11.fypcode.dto.response)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ActivityResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/25)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/25)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.response;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.activity.ActivityType;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetType;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.time.Instant;
+&nbsp;import java.util.UUID;
+&nbsp;
+<b class="nc">&nbsp;public class ActivityResponse {</b>
+&nbsp;
+&nbsp;    private UUID id;
+&nbsp;    private ActivityType type;
+&nbsp;    private AssetType assetType;
+&nbsp;    private String symbol;
+&nbsp;    private String displayName;
+&nbsp;    private String address;
+&nbsp;    private Instant date;
+&nbsp;    private BigDecimal quantity;
+&nbsp;    private BigDecimal unitPrice;
+&nbsp;    private BigDecimal fee;
+&nbsp;    private String currency;
+&nbsp;    private String comment;
+&nbsp;
+&nbsp;    public UUID getId() {
+<b class="nc">&nbsp;        return id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setId(UUID id) {
+<b class="nc">&nbsp;        this.id = id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public ActivityType getType() {
+<b class="nc">&nbsp;        return type;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setType(ActivityType type) {
+<b class="nc">&nbsp;        this.type = type;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public AssetType getAssetType() {
+<b class="nc">&nbsp;        return assetType;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAssetType(AssetType assetType) {
+<b class="nc">&nbsp;        this.assetType = assetType;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getSymbol() {
+<b class="nc">&nbsp;        return symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSymbol(String symbol) {
+<b class="nc">&nbsp;        this.symbol = symbol;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getDisplayName() {
+<b class="nc">&nbsp;        return displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setDisplayName(String displayName) {
+<b class="nc">&nbsp;        this.displayName = displayName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getAddress() {
+<b class="nc">&nbsp;        return address;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAddress(String address) {
+<b class="nc">&nbsp;        this.address = address;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Instant getDate() {
+<b class="nc">&nbsp;        return date;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setDate(Instant date) {
+<b class="nc">&nbsp;        this.date = date;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getQuantity() {
+<b class="nc">&nbsp;        return quantity;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setQuantity(BigDecimal quantity) {
+<b class="nc">&nbsp;        this.quantity = quantity;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getUnitPrice() {
+<b class="nc">&nbsp;        return unitPrice;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setUnitPrice(BigDecimal unitPrice) {
+<b class="nc">&nbsp;        this.unitPrice = unitPrice;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BigDecimal getFee() {
+<b class="nc">&nbsp;        return fee;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setFee(BigDecimal fee) {
+<b class="nc">&nbsp;        this.fee = fee;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getCurrency() {
+<b class="nc">&nbsp;        return currency;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setCurrency(String currency) {
+<b class="nc">&nbsp;        this.currency = currency;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getComment() {
+<b class="nc">&nbsp;        return comment;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setComment(String comment) {
+<b class="nc">&nbsp;        this.comment = comment;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

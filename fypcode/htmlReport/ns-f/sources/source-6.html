@@ -1,0 +1,357 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > BenchmarkService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service</a>
+</div>
+
+<h1>Coverage Summary for Class: BenchmarkService (com.tsh11.fypcode.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">BenchmarkService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    71.7%
+  </span>
+  <span class="absValue">
+    (43/60)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    85.1%
+  </span>
+  <span class="absValue">
+    (114/134)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.activity.Activity;
+&nbsp;import com.tsh11.fypcode.domain.activity.ActivityType;
+&nbsp;import com.tsh11.fypcode.dto.response.BenchmarkComparisonResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.BenchmarkPointResponse;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.HistoricalPricePoint;
+&nbsp;import com.tsh11.fypcode.integration.marketdata.MarketDataProvider;
+&nbsp;import com.tsh11.fypcode.repository.ActivityRepository;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.math.RoundingMode;
+&nbsp;import java.time.LocalDate;
+&nbsp;import java.time.ZoneOffset;
+&nbsp;import java.util.*;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Service
+&nbsp;@Transactional(readOnly = true)
+&nbsp;public class BenchmarkService {
+&nbsp;
+&nbsp;    private static final int SCALE = 6;
+&nbsp;
+&nbsp;    private final ActivityRepository activityRepository;
+&nbsp;    private final MarketDataProvider marketDataProvider;
+&nbsp;
+&nbsp;    public BenchmarkService(ActivityRepository activityRepository,
+<b class="fc">&nbsp;                            MarketDataProvider marketDataProvider) {</b>
+<b class="fc">&nbsp;        this.activityRepository = activityRepository;</b>
+<b class="fc">&nbsp;        this.marketDataProvider = marketDataProvider;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public BenchmarkComparisonResponse compareAgainstBenchmark(UUID userId,
+&nbsp;                                                               String benchmarkSymbol,
+&nbsp;                                                               LocalDate from,
+&nbsp;                                                               LocalDate to) {
+&nbsp;        //date validation
+<b class="fc">&nbsp;        if (from == null || to == null || from.isAfter(to)) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Invalid date range&quot;);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        //normalise the benchmark symbol
+<b class="pc">&nbsp;        String normalisedBenchmarkSymbol = benchmarkSymbol == null</b>
+<b class="nc">&nbsp;                ? &quot;&quot;</b>
+<b class="fc">&nbsp;                : benchmarkSymbol.trim().toUpperCase();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (normalisedBenchmarkSymbol.isBlank()) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Benchmark symbol must not be blank&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Activity&gt; activities = activityRepository.findByUserIdOrderByDateDesc(userId).stream()</b>
+<b class="pc">&nbsp;                .filter(a -&gt; a.getType() == ActivityType.BUY || a.getType() == ActivityType.SELL)</b>
+<b class="pc">&nbsp;                .filter(a -&gt; a.getSymbol() != null &amp;&amp; !a.getSymbol().isBlank())</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;        if (activities.isEmpty()) {</b>
+<b class="fc">&nbsp;            BenchmarkComparisonResponse empty = new BenchmarkComparisonResponse();</b>
+<b class="fc">&nbsp;            empty.setBenchmarkSymbol(benchmarkSymbol);</b>
+<b class="fc">&nbsp;            empty.setFromDate(from);</b>
+<b class="fc">&nbsp;            empty.setToDate(to);</b>
+<b class="fc">&nbsp;            empty.setStartingPortfolioValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setEndingPortfolioValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setPortfolioReturnPercent(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setStartingBenchmarkValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setEndingBenchmarkValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setBenchmarkReturnPercent(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setExcessReturnPercent(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setPoints(List.of());</b>
+<b class="fc">&nbsp;            return empty;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, List&lt;Activity&gt;&gt; activitiesBySymbol = activities.stream()</b>
+<b class="fc">&nbsp;                .collect(Collectors.groupingBy(a -&gt; a.getSymbol().trim().toUpperCase()));</b>
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, List&lt;HistoricalPricePoint&gt;&gt; priceHistoryBySymbol = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (String symbol : activitiesBySymbol.keySet()) {</b>
+<b class="fc">&nbsp;            priceHistoryBySymbol.put(symbol, marketDataProvider.getHistoricalPrices(symbol, from, to));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;HistoricalPricePoint&gt; benchmarkHistory =</b>
+<b class="fc">&nbsp;                marketDataProvider.getHistoricalIndexPrices(normalisedBenchmarkSymbol, from, to);</b>
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;LocalDate, BigDecimal&gt; benchmarkMap = benchmarkHistory.stream()</b>
+<b class="fc">&nbsp;                .collect(Collectors.toMap(HistoricalPricePoint::getDate, HistoricalPricePoint::getClose));</b>
+&nbsp;
+<b class="fc">&nbsp;        Set&lt;LocalDate&gt; commonDates = new TreeSet&lt;&gt;(benchmarkMap.keySet());</b>
+<b class="fc">&nbsp;        for (List&lt;HistoricalPricePoint&gt; history : priceHistoryBySymbol.values()) {</b>
+<b class="fc">&nbsp;            Set&lt;LocalDate&gt; symbolDates = history.stream()</b>
+<b class="fc">&nbsp;                    .map(HistoricalPricePoint::getDate)</b>
+<b class="fc">&nbsp;                    .collect(Collectors.toSet());</b>
+<b class="fc">&nbsp;            commonDates.retainAll(symbolDates);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;BenchmarkPointResponse&gt; points = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (LocalDate date : commonDates) {</b>
+<b class="fc">&nbsp;            BigDecimal portfolioValue = BigDecimal.ZERO;</b>
+&nbsp;
+<b class="fc">&nbsp;            for (Map.Entry&lt;String, List&lt;Activity&gt;&gt; entry : activitiesBySymbol.entrySet()) {</b>
+<b class="fc">&nbsp;                String symbol = entry.getKey();</b>
+<b class="fc">&nbsp;                BigDecimal quantityHeld = quantityHeldOnDate(entry.getValue(), date);</b>
+&nbsp;
+<b class="fc">&nbsp;                if (quantityHeld.compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+&nbsp;                    continue;
+&nbsp;                }
+&nbsp;
+<b class="fc">&nbsp;                BigDecimal close = closeForDate(priceHistoryBySymbol.get(symbol), date);</b>
+<b class="fc">&nbsp;                portfolioValue = portfolioValue.add(quantityHeld.multiply(close));</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            BenchmarkPointResponse point = new BenchmarkPointResponse();</b>
+<b class="fc">&nbsp;            point.setDate(date);</b>
+<b class="fc">&nbsp;            point.setPortfolioValue(portfolioValue);</b>
+<b class="fc">&nbsp;            point.setBenchmarkValue(benchmarkMap.getOrDefault(date, BigDecimal.ZERO));</b>
+&nbsp;
+<b class="fc">&nbsp;            points.add(point);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (points.isEmpty()) {</b>
+<b class="fc">&nbsp;            BenchmarkComparisonResponse empty = new BenchmarkComparisonResponse();</b>
+<b class="fc">&nbsp;            empty.setBenchmarkSymbol(normalisedBenchmarkSymbol);</b>
+<b class="fc">&nbsp;            empty.setFromDate(from);</b>
+<b class="fc">&nbsp;            empty.setToDate(to);</b>
+<b class="fc">&nbsp;            empty.setStartingPortfolioValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setEndingPortfolioValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setPortfolioReturnPercent(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setStartingBenchmarkValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setEndingBenchmarkValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setBenchmarkReturnPercent(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setExcessReturnPercent(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            empty.setPoints(List.of());</b>
+<b class="fc">&nbsp;            return empty;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Bug fix divide by 0 start
+<b class="fc">&nbsp;        List&lt;BenchmarkPointResponse&gt; positivePortfolioPoints = points.stream()</b>
+<b class="pc">&nbsp;                .filter(point -&gt; point.getPortfolioValue() != null)</b>
+<b class="fc">&nbsp;                .filter(point -&gt; point.getPortfolioValue().compareTo(BigDecimal.ZERO) &gt; 0)</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (positivePortfolioPoints.isEmpty()) {</b>
+<b class="nc">&nbsp;            BenchmarkComparisonResponse empty = new BenchmarkComparisonResponse();</b>
+<b class="nc">&nbsp;            empty.setBenchmarkSymbol(benchmarkSymbol.trim().toUpperCase());</b>
+<b class="nc">&nbsp;            empty.setFromDate(from);</b>
+<b class="nc">&nbsp;            empty.setToDate(to);</b>
+<b class="nc">&nbsp;            empty.setStartingPortfolioValue(BigDecimal.ZERO);</b>
+<b class="nc">&nbsp;            empty.setEndingPortfolioValue(BigDecimal.ZERO);</b>
+<b class="nc">&nbsp;            empty.setPortfolioReturnPercent(BigDecimal.ZERO);</b>
+<b class="nc">&nbsp;            empty.setStartingBenchmarkValue(BigDecimal.ZERO);</b>
+<b class="nc">&nbsp;            empty.setEndingBenchmarkValue(BigDecimal.ZERO);</b>
+<b class="nc">&nbsp;            empty.setBenchmarkReturnPercent(BigDecimal.ZERO);</b>
+<b class="nc">&nbsp;            empty.setExcessReturnPercent(BigDecimal.ZERO);</b>
+<b class="nc">&nbsp;            empty.setPoints(List.of());</b>
+<b class="nc">&nbsp;            return empty;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        points = positivePortfolioPoints;</b>
+&nbsp;        // Bug fix divide by 0 end
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal startPortfolio = points.get(0).getPortfolioValue();</b>
+<b class="fc">&nbsp;        BigDecimal endPortfolio = points.get(points.size() - 1).getPortfolioValue();</b>
+<b class="fc">&nbsp;        BigDecimal startBenchmark = points.get(0).getBenchmarkValue();</b>
+<b class="fc">&nbsp;        BigDecimal endBenchmark = points.get(points.size() - 1).getBenchmarkValue();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (BenchmarkPointResponse point : points) {</b>
+<b class="fc">&nbsp;            point.setPortfolioIndexed(indexTo100(point.getPortfolioValue(), startPortfolio));</b>
+<b class="fc">&nbsp;            point.setBenchmarkIndexed(indexTo100(point.getBenchmarkValue(), startBenchmark));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BenchmarkComparisonResponse response = new BenchmarkComparisonResponse();</b>
+<b class="fc">&nbsp;        response.setBenchmarkSymbol(normalisedBenchmarkSymbol);</b>
+<b class="fc">&nbsp;        response.setFromDate(points.get(0).getDate());</b>
+<b class="fc">&nbsp;        response.setToDate(points.get(points.size() - 1).getDate());</b>
+&nbsp;
+<b class="fc">&nbsp;        response.setStartingPortfolioValue(startPortfolio);</b>
+<b class="fc">&nbsp;        response.setEndingPortfolioValue(endPortfolio);</b>
+<b class="fc">&nbsp;        response.setPortfolioReturnPercent(returnPercent(startPortfolio, endPortfolio));</b>
+&nbsp;
+<b class="fc">&nbsp;        response.setStartingBenchmarkValue(startBenchmark);</b>
+<b class="fc">&nbsp;        response.setEndingBenchmarkValue(endBenchmark);</b>
+<b class="fc">&nbsp;        response.setBenchmarkReturnPercent(returnPercent(startBenchmark, endBenchmark));</b>
+&nbsp;
+<b class="fc">&nbsp;        response.setExcessReturnPercent(</b>
+<b class="fc">&nbsp;                response.getPortfolioReturnPercent().subtract(response.getBenchmarkReturnPercent())</b>
+&nbsp;        );
+<b class="fc">&nbsp;        response.setPoints(points);</b>
+&nbsp;
+<b class="fc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal quantityHeldOnDate(List&lt;Activity&gt; activities, LocalDate date) {
+<b class="fc">&nbsp;        BigDecimal quantity = BigDecimal.ZERO;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (Activity activity : activities) {</b>
+<b class="fc">&nbsp;            LocalDate activityDate = activity.getDate().atZone(ZoneOffset.UTC).toLocalDate();</b>
+<b class="fc">&nbsp;            if (activityDate.isAfter(date)) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="pc">&nbsp;            if (activity.getType() == ActivityType.BUY) {</b>
+<b class="fc">&nbsp;                quantity = quantity.add(nvl(activity.getQuantity()));</b>
+<b class="nc">&nbsp;            } else if (activity.getType() == ActivityType.SELL) {</b>
+<b class="nc">&nbsp;                quantity = quantity.subtract(nvl(activity.getQuantity()));</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return quantity.max(BigDecimal.ZERO);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal closeForDate(List&lt;HistoricalPricePoint&gt; history, LocalDate date) {
+<b class="pc">&nbsp;        for (HistoricalPricePoint point : history) {</b>
+<b class="fc">&nbsp;            if (point.getDate().equals(date)) {</b>
+<b class="fc">&nbsp;                return point.getClose();</b>
+&nbsp;            }
+&nbsp;        }
+<b class="nc">&nbsp;        return BigDecimal.ZERO;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal indexTo100(BigDecimal value, BigDecimal start) {
+<b class="pc">&nbsp;        if (start == null || start.compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return value.divide(start, SCALE, RoundingMode.HALF_UP)</b>
+<b class="fc">&nbsp;                .multiply(BigDecimal.valueOf(100));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal returnPercent(BigDecimal start, BigDecimal end) {
+<b class="pc">&nbsp;        if (start == null || start.compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return end.subtract(start)</b>
+<b class="fc">&nbsp;                .divide(start, SCALE, RoundingMode.HALF_UP)</b>
+<b class="fc">&nbsp;                .multiply(BigDecimal.valueOf(100));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal nvl(BigDecimal value) {
+<b class="pc">&nbsp;        return value == null ? BigDecimal.ZERO : value;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

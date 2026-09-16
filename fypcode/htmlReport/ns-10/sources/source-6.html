@@ -1,0 +1,295 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SuitabilityAnalysisService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.assistant</a>
+</div>
+
+<h1>Coverage Summary for Class: SuitabilityAnalysisService (com.tsh11.fypcode.service.assistant)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SuitabilityAnalysisService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    94.4%
+  </span>
+  <span class="absValue">
+    (34/36)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    98.6%
+  </span>
+  <span class="absValue">
+    (68/69)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.assistant;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.asset.AssetClass;
+&nbsp;import com.tsh11.fypcode.domain.investor.AssistantAllocationBucket;
+&nbsp;import com.tsh11.fypcode.dto.response.ActualAllocationResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.AllocationComparisonResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.HoldingResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.TargetAllocationResponse;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.math.BigDecimal;
+&nbsp;import java.math.MathContext;
+&nbsp;import java.math.RoundingMode;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.EnumMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;//Compares the user’s actual allocation against the target allocation
+&nbsp;@Service
+&nbsp;public class SuitabilityAnalysisService {
+&nbsp;
+<b class="fc">&nbsp;    private static final MathContext MC = MathContext.DECIMAL64; //avoid floating-point inaccuracies</b>
+&nbsp;    private static final int DECIMAL_PLACE = 6;
+<b class="fc">&nbsp;    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);</b>
+&nbsp;    // If the actual allocation differs from the target by less than 5%, it is considered acceptable.
+&nbsp;    // If the difference is between 5% and 15%, it is a minor drift.
+&nbsp;    // If it is 15% or more, it is considered significant.
+<b class="fc">&nbsp;    private static final BigDecimal MINOR_DRIFT_THRESHOLD = BigDecimal.valueOf(5);</b>
+<b class="fc">&nbsp;    private static final BigDecimal MAJOR_DRIFT_THRESHOLD = BigDecimal.valueOf(15);</b>
+&nbsp;
+&nbsp;    private final AssistantAssetClassMapper assistantAssetClassMapper;
+&nbsp;
+&nbsp;    //constructor
+<b class="fc">&nbsp;    public SuitabilityAnalysisService(AssistantAssetClassMapper assistantAssetClassMapper) {</b>
+<b class="fc">&nbsp;        this.assistantAssetClassMapper = assistantAssetClassMapper;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //calculates the user’s current real portfolio allocation from their holdings
+&nbsp;    public ActualAllocationResponse calculateActualAllocation(List&lt;HoldingResponse&gt; holdings) {
+&nbsp;        //Initialise allocation buckets to BigDecimal.ZERO
+<b class="fc">&nbsp;        Map&lt;AssistantAllocationBucket, BigDecimal&gt; values = new EnumMap&lt;&gt;(AssistantAllocationBucket.class);</b>
+<b class="fc">&nbsp;        for (AssistantAllocationBucket bucket : AssistantAllocationBucket.values()) {</b>
+<b class="fc">&nbsp;            values.put(bucket, BigDecimal.ZERO);</b>
+&nbsp;        }
+&nbsp;        //Handle empty holdings
+<b class="fc">&nbsp;        if (holdings == null || holdings.isEmpty()) {</b>
+<b class="fc">&nbsp;            ActualAllocationResponse empty = new ActualAllocationResponse();</b>
+<b class="fc">&nbsp;            empty.setTotalPortfolioValue(BigDecimal.ZERO);</b>
+<b class="fc">&nbsp;            return empty;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        BigDecimal total = BigDecimal.ZERO;</b>
+<b class="fc">&nbsp;        boolean etfAssumptionUsed = false;</b>
+&nbsp;        //Loop through holdings
+<b class="fc">&nbsp;        for (HoldingResponse holding : holdings) {</b>
+&nbsp;            //Skip invalid holdings
+<b class="fc">&nbsp;            if (holding == null) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;            //Determine the holding value
+<b class="fc">&nbsp;            BigDecimal value = holdingValue(holding);</b>
+<b class="fc">&nbsp;            if (value.compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;            //If the portfolio contains an ETF, the service records that an ETF assumption was used.
+&nbsp;            //Will be used to warn the user about system assuming ETF as Equity
+<b class="fc">&nbsp;            if (holding.getAssetClass() == AssetClass.ETF) {</b>
+<b class="fc">&nbsp;                etfAssumptionUsed = true;</b>
+&nbsp;            }
+&nbsp;            //Map asset class to assistant bucket
+<b class="fc">&nbsp;            AssistantAllocationBucket bucket = assistantAssetClassMapper.map(holding.getAssetClass());</b>
+&nbsp;            //Add value to the bucket
+<b class="fc">&nbsp;            values.put(bucket, values.get(bucket).add(value));</b>
+<b class="fc">&nbsp;            total = total.add(value);</b>
+&nbsp;        }
+&nbsp;        //Build the response
+<b class="fc">&nbsp;        ActualAllocationResponse response = new ActualAllocationResponse();</b>
+<b class="fc">&nbsp;        response.setTotalPortfolioValue(total);</b>
+<b class="fc">&nbsp;        response.setEtfAssumptionUsed(etfAssumptionUsed);</b>
+&nbsp;        //Convert bucket values into percentages
+<b class="fc">&nbsp;        response.setEquityPercent(toPercent(values.get(AssistantAllocationBucket.EQUITY), total));</b>
+<b class="fc">&nbsp;        response.setBondPercent(toPercent(values.get(AssistantAllocationBucket.BOND), total));</b>
+<b class="fc">&nbsp;        response.setCashPercent(toPercent(values.get(AssistantAllocationBucket.CASH), total));</b>
+<b class="fc">&nbsp;        response.setCryptoPercent(toPercent(values.get(AssistantAllocationBucket.CRYPTO), total));</b>
+<b class="fc">&nbsp;        response.setRealEstatePercent(toPercent(values.get(AssistantAllocationBucket.REAL_ESTATE), total));</b>
+<b class="fc">&nbsp;        response.setOtherPercent(toPercent(values.get(AssistantAllocationBucket.OTHER), total));</b>
+<b class="fc">&nbsp;        response.setUnclassifiedPercent(toPercent(values.get(AssistantAllocationBucket.UNCLASSIFIED), total));</b>
+<b class="fc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //compares the recommended target allocation with the user’s actual allocation.
+&nbsp;    //compares only:
+&nbsp;    //EQUITY
+&nbsp;    //BOND
+&nbsp;    //CASH
+&nbsp;    public List&lt;AllocationComparisonResponse&gt; compare(TargetAllocationResponse target,
+&nbsp;                                                       ActualAllocationResponse actual) {
+<b class="fc">&nbsp;        if (target == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Target allocation must not be null.&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (actual == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Actual allocation must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;        //Compare equity, bond, and cash
+<b class="fc">&nbsp;        List&lt;AllocationComparisonResponse&gt; comparisons = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        comparisons.add(compareBucket(&quot;EQUITY&quot;, target.getEquityPercent(), actual.getEquityPercent()));</b>
+<b class="fc">&nbsp;        comparisons.add(compareBucket(&quot;BOND&quot;, target.getBondPercent(), actual.getBondPercent()));</b>
+<b class="fc">&nbsp;        comparisons.add(compareBucket(&quot;CASH&quot;, target.getCashPercent(), actual.getCashPercent()));</b>
+<b class="fc">&nbsp;        return comparisons;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //helper function
+&nbsp;    //compares one allocation bucket
+&nbsp;    //example:
+&nbsp;    //bucket = &quot;EQUITY&quot;
+&nbsp;    //targetPercent = 60
+&nbsp;    //actualPercent = 85
+&nbsp;    //Difference: +25%
+&nbsp;    //Status: SIGNIFICANTLY_OVERWEIGHT
+&nbsp;    private AllocationComparisonResponse compareBucket(String bucket,
+&nbsp;                                                       BigDecimal targetPercent,
+&nbsp;                                                       BigDecimal actualPercent) {
+<b class="fc">&nbsp;        BigDecimal target = nvl(targetPercent);</b>
+<b class="fc">&nbsp;        BigDecimal actual = nvl(actualPercent);</b>
+<b class="fc">&nbsp;        BigDecimal difference = actual.subtract(target, MC);</b>
+&nbsp;        //create comparison response
+<b class="fc">&nbsp;        AllocationComparisonResponse response = new AllocationComparisonResponse();</b>
+<b class="fc">&nbsp;        response.setBucket(bucket);</b>
+<b class="fc">&nbsp;        response.setTargetPercent(target);</b>
+<b class="fc">&nbsp;        response.setActualPercent(actual);</b>
+<b class="fc">&nbsp;        response.setDifferencePercent(difference);</b>
+<b class="fc">&nbsp;        response.setStatus(toStatus(difference));</b>
+<b class="fc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;    //converts a numerical allocation difference into a human-readable status
+&nbsp;    private String toStatus(BigDecimal difference) {
+&nbsp;
+&nbsp;        //first check how large the difference is, ignoring whether it is positive or negative.
+<b class="fc">&nbsp;        BigDecimal absolute = difference.abs();</b>
+&nbsp;
+&nbsp;        //If the difference is less than 5%, the portfolio is considered close enough to the target.
+<b class="fc">&nbsp;        if (absolute.compareTo(MINOR_DRIFT_THRESHOLD) &lt; 0) {</b>
+<b class="fc">&nbsp;            return &quot;WITHIN_TARGET_RANGE&quot;;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        //If the difference is at least 5% but less than 15%, it is considered a minor drift.
+<b class="fc">&nbsp;        if (absolute.compareTo(MAJOR_DRIFT_THRESHOLD) &lt; 0) {</b>
+<b class="fc">&nbsp;            return difference.signum() &gt; 0 ? &quot;SLIGHTLY_OVERWEIGHT&quot; : &quot;SLIGHTLY_UNDERWEIGHT&quot;;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        //If the difference is 15% or more, the allocation is considered significantly different from the target.
+<b class="fc">&nbsp;        return difference.signum() &gt; 0 ? &quot;SIGNIFICANTLY_OVERWEIGHT&quot; : &quot;SIGNIFICANTLY_UNDERWEIGHT&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //decides what value should be used for a holding when calculating allocation.
+&nbsp;    private BigDecimal holdingValue(HoldingResponse holding) {
+&nbsp;        //market value
+<b class="fc">&nbsp;        if (holding.getMarketValue() != null &amp;&amp; holding.getMarketValue().compareTo(BigDecimal.ZERO) &gt; 0) {</b>
+<b class="fc">&nbsp;            return holding.getMarketValue();</b>
+&nbsp;        }
+&nbsp;        //falls back to total cost
+<b class="fc">&nbsp;        return nvl(holding.getTotalCost());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private BigDecimal toPercent(BigDecimal value, BigDecimal total) {
+<b class="pc">&nbsp;        if (total == null || total.compareTo(BigDecimal.ZERO) &lt;= 0) {</b>
+<b class="nc">&nbsp;            return BigDecimal.ZERO;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return nvl(value)</b>
+<b class="fc">&nbsp;                .divide(total, DECIMAL_PLACE, RoundingMode.HALF_UP)</b>
+<b class="fc">&nbsp;                .multiply(HUNDRED);</b>
+&nbsp;    }
+&nbsp;    //null-safety helper
+&nbsp;    private BigDecimal nvl(BigDecimal value) {
+<b class="fc">&nbsp;        return value == null ? BigDecimal.ZERO : value;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

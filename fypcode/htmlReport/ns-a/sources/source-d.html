@@ -1,0 +1,222 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > FinancialAssistantResponse</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.dto.response</a>
+</div>
+
+<h1>Coverage Summary for Class: FinancialAssistantResponse (com.tsh11.fypcode.dto.response)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">FinancialAssistantResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (17/17)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (19/19)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.dto.response;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.investor.RiskProfileType;
+&nbsp;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;//the main combined response returned by:
+&nbsp;//GET /api/portfolio/assistant
+&nbsp;//gives the frontend everything it needs to display the Financial Consultant Assistant card on the overview page.
+&nbsp;
+&nbsp;//included informations:
+&nbsp;//whether profile exists
+&nbsp;//risk profile
+&nbsp;//target allocation
+&nbsp;//actual allocation
+&nbsp;//allocation comparisons
+&nbsp;//assistant insights
+&nbsp;
+&nbsp;//example JSON:
+&nbsp;/*
+&nbsp;{
+&nbsp;  &quot;profileExists&quot;: true,
+&nbsp;  &quot;riskProfile&quot;: &quot;BALANCED&quot;,
+&nbsp;  &quot;targetAllocation&quot;: {
+&nbsp;    &quot;equityPercent&quot;: 60,
+&nbsp;    &quot;bondPercent&quot;: 30,
+&nbsp;    &quot;cashPercent&quot;: 10
+&nbsp;  },
+&nbsp;  &quot;actualAllocation&quot;: {
+&nbsp;    &quot;equityPercent&quot;: 75,
+&nbsp;    &quot;bondPercent&quot;: 0,
+&nbsp;    &quot;cashPercent&quot;: 5,
+&nbsp;    &quot;cryptoPercent&quot;: 20
+&nbsp;  },
+&nbsp;  &quot;insights&quot;: [
+&nbsp;    {
+&nbsp;      &quot;severity&quot;: &quot;WARNING&quot;,
+&nbsp;      &quot;message&quot;: &quot;Your bond allocation is below the target for your profile.&quot;
+&nbsp;    }
+&nbsp;  ]
+&nbsp;}
+&nbsp;*/
+&nbsp;
+<b class="fc">&nbsp;public class FinancialAssistantResponse {</b>
+&nbsp;    private boolean profileExists;
+&nbsp;    private RiskProfileType riskProfileType;
+&nbsp;    private int riskScore;
+&nbsp;    private TargetAllocationResponse targetAllocation;
+&nbsp;    private ActualAllocationResponse actualAllocation;
+<b class="fc">&nbsp;    private List&lt;AllocationComparisonResponse&gt; comparisons = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;    private List&lt;AssistantInsightResponse&gt; insights = new ArrayList&lt;&gt;();</b>
+&nbsp;    private String disclaimer;
+&nbsp;
+&nbsp;    public boolean isProfileExists() {
+<b class="fc">&nbsp;        return profileExists;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setProfileExists(boolean profileExists) {
+<b class="fc">&nbsp;        this.profileExists = profileExists;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public RiskProfileType getRiskProfileType() {
+<b class="fc">&nbsp;        return riskProfileType;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setRiskProfileType(RiskProfileType riskProfileType) {
+<b class="fc">&nbsp;        this.riskProfileType = riskProfileType;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public int getRiskScore() {
+<b class="fc">&nbsp;        return riskScore;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setRiskScore(int riskScore) {
+<b class="fc">&nbsp;        this.riskScore = riskScore;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public TargetAllocationResponse getTargetAllocation() {
+<b class="fc">&nbsp;        return targetAllocation;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setTargetAllocation(TargetAllocationResponse targetAllocation) {
+<b class="fc">&nbsp;        this.targetAllocation = targetAllocation;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public ActualAllocationResponse getActualAllocation() {
+<b class="fc">&nbsp;        return actualAllocation;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setActualAllocation(ActualAllocationResponse actualAllocation) {
+<b class="fc">&nbsp;        this.actualAllocation = actualAllocation;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;AllocationComparisonResponse&gt; getComparisons() {
+<b class="fc">&nbsp;        return comparisons;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setComparisons(List&lt;AllocationComparisonResponse&gt; comparisons) {
+<b class="fc">&nbsp;        this.comparisons = comparisons;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;AssistantInsightResponse&gt; getInsights() {
+<b class="fc">&nbsp;        return insights;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setInsights(List&lt;AssistantInsightResponse&gt; insights) {
+<b class="fc">&nbsp;        this.insights = insights;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getDisclaimer() {
+<b class="fc">&nbsp;        return disclaimer;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setDisclaimer(String disclaimer) {
+<b class="fc">&nbsp;        this.disclaimer = disclaimer;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>

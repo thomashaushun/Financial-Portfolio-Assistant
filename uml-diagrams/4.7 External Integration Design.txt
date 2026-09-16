@@ -1,0 +1,60 @@
+@startuml
+title Figure 4.7 External Integration Design
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Market Data Integration" {
+  component "MarketDataService\nInternal market-data facade" as MarketDataService
+  interface "MarketDataProvider" as MarketDataProvider
+  component "AlphaVantageMarketDataProvider\nFinal market-data implementation" as AlphaProvider
+
+  component "AssetMetadata" as AssetMetadata
+  component "LatestQuote" as LatestQuote
+  component "HistoricalPricePoint" as HistoricalPricePoint
+  component "AlphaVantageBulkQuote" as BulkQuote
+}
+
+package "LLM Explanation Integration" {
+  component "ExplainabilityService\nBuilds explanation context" as ExplainabilityService
+  component "CachedLlmExplanationService\nCaches explanation results" as CachedExplanationService
+  interface "LlmExplanationClient" as LlmClient
+  component "GeminiExplanationClient\nGoogle GenAI implementation" as GeminiClient
+}
+
+component "Spring Cache /\nCacheConfig" as Cache
+
+cloud "Alpha Vantage API" as AlphaVantage
+cloud "Gemini API\nGoogle GenAI" as Gemini
+
+MarketDataService --> MarketDataProvider
+MarketDataProvider <|.. AlphaProvider
+
+AlphaProvider --> AlphaVantage : asset search
+AlphaProvider --> AlphaVantage : asset metadata
+AlphaProvider --> AlphaVantage : latest / bulk quotes
+AlphaProvider --> AlphaVantage : historical prices
+AlphaProvider --> AlphaVantage : benchmark / index data
+
+AlphaProvider --> AssetMetadata
+AlphaProvider --> LatestQuote
+AlphaProvider --> HistoricalPricePoint
+AlphaProvider --> BulkQuote
+
+MarketDataService --> Cache : cache market data
+
+ExplainabilityService --> CachedExplanationService
+CachedExplanationService --> LlmClient
+LlmClient <|.. GeminiClient
+GeminiClient --> Gemini : explanation request
+
+CachedExplanationService --> Cache : cache explanation output
+
+
+note bottom of GeminiClient
+The LLM explains calculated backend results.
+It does not calculate portfolio metrics.
+end note
+
+@enduml

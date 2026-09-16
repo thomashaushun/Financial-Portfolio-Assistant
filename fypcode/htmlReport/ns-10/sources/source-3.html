@@ -1,0 +1,213 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > FinancialAssistantService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.tsh11.fypcode.service.assistant</a>
+</div>
+
+<h1>Coverage Summary for Class: FinancialAssistantService (com.tsh11.fypcode.service.assistant)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">FinancialAssistantService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (28/28)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.tsh11.fypcode.service.assistant;
+&nbsp;
+&nbsp;import com.tsh11.fypcode.domain.investor.InsightSeverity;
+&nbsp;import com.tsh11.fypcode.domain.investor.InvestorProfile;
+&nbsp;import com.tsh11.fypcode.dto.response.ActualAllocationResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.AllocationComparisonResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.AssistantInsightResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.FinancialAssistantResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.HoldingResponse;
+&nbsp;import com.tsh11.fypcode.dto.response.TargetAllocationResponse;
+&nbsp;import com.tsh11.fypcode.service.HoldingService;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.UUID;
+&nbsp;//Coordinates the whole assistant workflow.
+&nbsp;/*
+&nbsp;Get investor profile
+&nbsp;↓
+&nbsp;If missing, return profileExists = false
+&nbsp;↓
+&nbsp;Get target allocation from RiskProfileType
+&nbsp;↓
+&nbsp;Get holdings
+&nbsp;↓
+&nbsp;Calculate actual allocation
+&nbsp;↓
+&nbsp;Compare target vs actual
+&nbsp;↓
+&nbsp;Generate assistant insights
+&nbsp;↓
+&nbsp;Return FinancialAssistantResponse
+&nbsp; */
+&nbsp;@Service
+&nbsp;@Transactional(readOnly = true)
+&nbsp;public class FinancialAssistantService {
+&nbsp;
+&nbsp;    private static final String DISCLAIMER = &quot;This assistant provides rule-based educational portfolio guidance only. It does not provide regulated financial advice.&quot;;
+&nbsp;
+&nbsp;    private final InvestorProfileService investorProfileService;
+&nbsp;    private final HoldingService holdingService;
+&nbsp;    private final TargetAllocationService targetAllocationService;
+&nbsp;    private final SuitabilityAnalysisService suitabilityAnalysisService;
+&nbsp;    private final AssistantInsightService assistantInsightService;
+&nbsp;
+&nbsp;    public FinancialAssistantService(InvestorProfileService investorProfileService,
+&nbsp;                                     HoldingService holdingService,
+&nbsp;                                     TargetAllocationService targetAllocationService,
+&nbsp;                                     SuitabilityAnalysisService suitabilityAnalysisService,
+<b class="fc">&nbsp;                                     AssistantInsightService assistantInsightService) {</b>
+<b class="fc">&nbsp;        this.investorProfileService = investorProfileService;</b>
+<b class="fc">&nbsp;        this.holdingService = holdingService;</b>
+<b class="fc">&nbsp;        this.targetAllocationService = targetAllocationService;</b>
+<b class="fc">&nbsp;        this.suitabilityAnalysisService = suitabilityAnalysisService;</b>
+<b class="fc">&nbsp;        this.assistantInsightService = assistantInsightService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public FinancialAssistantResponse getAssistantSummary(UUID userId) {
+<b class="fc">&nbsp;        if (userId == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;User ID must not be null.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        FinancialAssistantResponse response = new FinancialAssistantResponse();</b>
+<b class="fc">&nbsp;        response.setDisclaimer(DISCLAIMER);</b>
+&nbsp;
+<b class="fc">&nbsp;        InvestorProfile profile = investorProfileService.findEntityForUser(userId).orElse(null);</b>
+<b class="fc">&nbsp;        if (profile == null) {</b>
+<b class="fc">&nbsp;            response.setProfileExists(false);</b>
+<b class="fc">&nbsp;            response.getInsights().add(new AssistantInsightResponse(</b>
+&nbsp;                    InsightSeverity.INFO,
+&nbsp;                    &quot;Create an investor profile&quot;,
+&nbsp;                    &quot;Complete the investor profile questionnaire to receive personalised suitability insights.&quot;
+&nbsp;            ));
+<b class="fc">&nbsp;            return response;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;HoldingResponse&gt; holdings = holdingService.getHoldings(userId);</b>
+<b class="fc">&nbsp;        TargetAllocationResponse targetAllocation = targetAllocationService.getTargetAllocation(profile.getRiskProfileType());</b>
+<b class="fc">&nbsp;        ActualAllocationResponse actualAllocation = suitabilityAnalysisService.calculateActualAllocation(holdings);</b>
+<b class="fc">&nbsp;        List&lt;AllocationComparisonResponse&gt; comparisons = suitabilityAnalysisService.compare(targetAllocation, actualAllocation);</b>
+&nbsp;
+<b class="fc">&nbsp;        response.setProfileExists(true);</b>
+<b class="fc">&nbsp;        response.setRiskProfileType(profile.getRiskProfileType());</b>
+<b class="fc">&nbsp;        response.setRiskScore(profile.getRiskScore());</b>
+<b class="fc">&nbsp;        response.setTargetAllocation(targetAllocation);</b>
+<b class="fc">&nbsp;        response.setActualAllocation(actualAllocation);</b>
+<b class="fc">&nbsp;        response.setComparisons(comparisons);</b>
+<b class="fc">&nbsp;        response.setInsights(assistantInsightService.buildInsights(</b>
+<b class="fc">&nbsp;                profile.getRiskProfileType(),</b>
+&nbsp;                comparisons,
+&nbsp;                actualAllocation
+&nbsp;        ));
+&nbsp;
+<b class="fc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-05-25 21:30</div>
+</div>
+</body>
+</html>
